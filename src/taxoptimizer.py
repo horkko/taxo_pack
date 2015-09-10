@@ -11,7 +11,7 @@
 
 import os
 import sys
-import getopt
+import argparse
 
 import Golden
 
@@ -345,14 +345,6 @@ usage: taxoptimizer [options] -i <infile> -o <outfile>
 
 options:
 
-   -i <file> ... Tabulated file.
-   -o <file> ... Output file
-
-   -h        ... Print this message and exit.
-   -c <int>  ... Column number to parse (default second column: 2)
-   -s <car>  ... Separator character (default '|')
-   -d <str>  ... Specified Database name for finding taxonomy in only once database.
-   -e        ... Add description (DE) in output
    -f <file> ... Extract line without taxonomy from input file
    -x        ... Only write line with taxonomy in output file
 
@@ -361,6 +353,51 @@ options:
 
 
 if __name__=='__main__':
+    
+    parser = argparse.ArgumentParser(prog='taxoptimizer.py',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     description="")
+
+    general_options = parser.add_argument_group(title="Options", description=None)
+
+    general_options.add_argument("-i", "--in", dest="tab_file",
+                                 help="Tabulated file. (Example, Blast m8 file)",
+                                 metavar="File",
+                                 type='str',
+                                 default=sys.stdin)
+    general_options.add_argument("-o", "--out",
+                                 action='store',
+                                 dest='outfh',
+                                 metavar="File",
+                                 help='Output file. (default: stdout if not specified.',
+                                 default=sys.stdout)
+    general_options.add_argument("-c", "--column",
+                                 action='store',
+                                 dest='column',
+                                 type='int',
+                                 help='Column number to parse',
+                                 default=2)
+    general_options.add_argument("-s", "--separator",
+                                 dest="separator", metavar="str", type='str',
+                                 help="Separator in database AC",
+                                 default='|')
+    general_options.add_argument('-d', '---database', metavar='str',
+                                 dest='database',
+                                 type='str',
+                                 help="Limit taxomnomic research in this database",
+                                 )
+    general_options.add_argument("-e", "--description",
+                                 dest="description",
+                                 help="Add description (DE) in output",
+                                 action='store_true',
+                                 default=False,)
+
+    args = parser.parse_args()
+
+    
+    
+    
+    
     from bsddb3 import db as bdb
 
     cnt_cards = 0
@@ -378,35 +415,13 @@ if __name__=='__main__':
         usage()
         sys.exit(0)
 
-    tabFile = None
-    outFile = None
     noTaxoFile = None
     splitFile = False
-    column = 1
-    separator = '|'
-    DE = False
-    database = None
     max_cards = 500
     for o, v in opts:  # (opt, value)
         if o in ("-h", "--help"):
             usage()
             sys.exit(0)
-        elif o in ("-i", "--in"):
-            tabFile = v
-        elif o in ("-o", "--out"):
-            outFile = v
-        elif o in ("-c", "--col"):
-            try:
-                column = int(v) - 1
-            except:
-                print >>sys.stderr, TaxOptimizerError("Integer value is mandatory for column number")
-                sys.exit(0)
-        elif o in ("-d", "--db"):
-            database = v
-        elif o in ("-s", "--sep"):
-            separator = v
-        elif o in ("-e", "--desc"):
-            DE = True
         elif o in ("-f", "--notaxout"):
             noTaxoFile = v
         elif o in ("-x", "--sep"):
@@ -417,20 +432,17 @@ if __name__=='__main__':
             usage()
             sys.exit(0)
 
-    if not tabFile:
-        usage()
-        sys.exit(0)
 
     # more m8Blast_nrprot_light2.txt| ../../src/taxoptimizer.py -o toto -i /dev/stdin
 
     # ===== Tabulated file parsing
     try:
-        tabfhin = open(tabFile)
+        tabfh = open(args.tab_file)
     except:
-        tabfhin = sys.stdin
+        tabfh = sys.stdin
 
     try:
-        outfh = open(outFile, 'w')
+        outfh = open(args.outfh, 'w')
     except:
         outfh = sys.stdout
 
@@ -452,7 +464,7 @@ if __name__=='__main__':
     allTaxo = {}
     allTaxId = {}
     try:
-        line = tabfhin.readline()
+        line = tabfh.readline()
         lineNb = 1
     except EOFError, err:
         print >>sys.stderr, err
@@ -464,10 +476,10 @@ if __name__=='__main__':
         description = ''
         fld = line.split()
         if line == '\n':
-            line = tabfhin.readline()
+            line = tabfh.readline()
             continue
         try:
-            fldInfo = fld[column].split(separator)
+            fldInfo = fld[args.column - 1].split(args.separator)
         except:
             print >>sys.stderr,  TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s\n --> %s" % (line, lineNb))
             sys.exit()
@@ -476,23 +488,23 @@ if __name__=='__main__':
         db = ''
         if len(fldInfo) == 5:
             # PF8/Pathoquest
-            if database:
-                db = database
+            if args.database:
+                db = args.database
             else:
                 db = fldInfo[2]
             acc = fldInfo[3].split('.')[0]
         elif len(fldInfo) == 2 or len(fldInfo) == 3:
             # Lionel extraction
-            if database:
-                db = database
+            if args.database:
+                db = args.database
             else:
                 db = fldInfo[0]
             if len(fldInfo) == 3 and fldInfo[1] == '':
                 acc = fldInfo[2].split('.')[0]
             else:
                 acc = fldInfo[1].split('.')[0]
-        elif len(fldInfo) == 1 and database:
-                db = database
+        elif len(fldInfo) == 1 and args.database:
+                db = args.database
                 acc = fldInfo[0]
 
         if not acc or not db:
@@ -500,10 +512,10 @@ if __name__=='__main__':
                 print >>outfh, line[:-1]
             if noTaxoFile:
                 print >>notaxfhout,  line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: :%s in line %s" % (fld[column], lineNb))
+            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: :%s in line %s" % (fld[args.column - 1], lineNb))
 
             try:
-                line = tabfhin.readline()
+                line = tabfh.readline()
                 lineNb += 1
             except EOFError, err:
                 print >>sys.stderr, err
@@ -513,7 +525,7 @@ if __name__=='__main__':
         elif db not in ['silva', 'gg']:
             l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
             if cnt_cards == max_cards:
-                allTaxo = doGoldenMulti(allTaxo, l_cards, DE, allTaxId, ncbi_osVSocBDB)
+                allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, ncbi_osVSocBDB)
                 printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile)
                 l_cards = ""
                 l_lines = []
@@ -566,7 +578,7 @@ if __name__=='__main__':
                     print >>outfh, line[:-1]
 
         try:
-            line = tabfhin.readline()
+            line = tabfh.readline()
             lineNb += 1
         except EOFError, err:
             print >>sys.stderr, err
@@ -579,5 +591,5 @@ if __name__=='__main__':
         allTaxo = doGoldenMulti(allTaxo, l_cards, DE, allTaxId, ncbi_osVSocBDB)
         printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile)
 
-    tabfhin.close()
+    tabfh.close()
     ncbi_osVSocBDB.close()
