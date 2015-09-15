@@ -19,25 +19,25 @@ try:
     GOLDENDATA = os.environ['GOLDENDATA']
 except:
     GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
-    # GOLDENDATA = "/local/gensoft/share/golden/db"
+    #GOLDENDATA = "/mount/banques/prod/index/golden/"
     os.environ['GOLDENDATA'] = GOLDENDATA
 
 try:
     TABLE = os.environ['TAXOBDBDATA']
 except:
-    # TABLE = '/local/databases/rel/taxodb/current/bdb/'
+    TABLE = '/local/databases/rel/taxodb/current/bdb/'
     TABLE = '/Users/maufrais/Developpements/TaxoDBNCBI/test/'
 
 try:
     SILVA_TABLE = os.environ['SILVABDBDATA']
 except:
-    # SILVA_TABLE = '/local/databases/rel/taxodb/current/bdb/'
+    SILVA_TABLE = '/local/databases/rel/taxodb/current/bdb/'
     SILVA_TABLE = '/Users/maufrais/Developpements/TaxoDB/data/'
 
 try:
     GG_TABLE = os.environ['GGBDBDATA']
 except:
-    # GG_TABLE = '/local/databases/rel/taxodb/current/bdb/'
+    GG_TABLE = '/local/databases/rel/taxodb/current/bdb/'
     GG_TABLE = '/Users/maufrais/Developpements/TaxoDB/data/'
 
 TAXODB_BDB = 'taxodb.bdb'
@@ -339,51 +339,40 @@ def extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, BDB):
 ##############################################################################
 
 
-def usage():
-    print """
-usage: taxoptimizer [options] -i <infile> -o <outfile>
 
-options:
+if __name__ == '__main__':
 
-   -f <file> ... Extract line without taxonomy from input file
-   -x        ... Only write line with taxonomy in output file
-
-   -m <int>  ... Maximum cards number use by Golden2.0 in analyses.
-"""
-
-
-if __name__=='__main__':
-    
     parser = argparse.ArgumentParser(prog='taxoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description="")
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
-    general_options.add_argument("-i", "--in", dest="tab_file",
+    general_options.add_argument("-i", "--in", dest="tabfh",
                                  help="Tabulated file. (Example, Blast m8 file)",
                                  metavar="File",
-                                 type='str',
+                                 type=file,
                                  default=sys.stdin)
     general_options.add_argument("-o", "--out",
                                  action='store',
                                  dest='outfh',
                                  metavar="File",
-                                 help='Output file. (default: stdout if not specified.',
+                                 type=argparse.FileType('w'),
+                                 help='Output file',
                                  default=sys.stdout)
     general_options.add_argument("-c", "--column",
                                  action='store',
                                  dest='column',
-                                 type='int',
+                                 type=int,
                                  help='Column number to parse',
                                  default=2)
     general_options.add_argument("-s", "--separator",
-                                 dest="separator", metavar="str", type='str',
+                                 dest="separator", metavar="str", type=str,
                                  help="Separator in database AC",
                                  default='|')
     general_options.add_argument('-d', '---database', metavar='str',
                                  dest='database',
-                                 type='str',
+                                 type=str,
                                  help="Limit taxomnomic research in this database",
                                  )
     general_options.add_argument("-e", "--description",
@@ -392,13 +381,30 @@ if __name__=='__main__':
                                  action='store_true',
                                  default=False,)
 
+    general_options.add_argument("-x", "--splitfile",
+                                 dest="splitfile",
+                                 help="Only write line with taxonomy in output file.",
+                                 action='store_true',
+                                 default=False,)
+    general_options.add_argument("-f", "--no_taxo_file",
+                                 action='store',
+                                 dest='notaxofh',
+                                 metavar="File",
+                                 type=argparse.FileType('w'),
+                                 help='Only write line without taxonomy in this file. Could be use with -x option',)
+
+    golden_options = parser.add_argument_group(title="Golden options", description=None)
+    golden_options.add_argument("-m", "--max_cards",
+                                 action='store',
+                                 dest='max_cards',
+                                 type=int,
+                                 help='Maximum cards number use by Golden2.0 in analyses',
+                                 default=500)
+
     args = parser.parse_args()
 
-    
-    
-    
-    
-    from bsddb3 import db as bdb
+
+    from bsddb import db as bdb
 
     cnt_cards = 0
     l_lines = []
@@ -408,47 +414,8 @@ if __name__=='__main__':
     except:
         TMP_PATH = "/tmp"
 
-    #  ===== Command line parser
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "hi:c:s:d:eo:f:xm:", ["help", ])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(0)
-
-    noTaxoFile = None
-    splitFile = False
-    max_cards = 500
-    for o, v in opts:  # (opt, value)
-        if o in ("-h", "--help"):
-            usage()
-            sys.exit(0)
-        elif o in ("-f", "--notaxout"):
-            noTaxoFile = v
-        elif o in ("-x", "--sep"):
-            splitFile = True
-        elif o in ("-m", "--max_cards"):
-            max_cards = int(v)
-        else:
-            usage()
-            sys.exit(0)
-
-
-    # more m8Blast_nrprot_light2.txt| ../../src/taxoptimizer.py -o toto -i /dev/stdin
-
     # ===== Tabulated file parsing
-    try:
-        tabfh = open(args.tab_file)
-    except:
-        tabfh = sys.stdin
 
-    try:
-        outfh = open(args.outfh, 'w')
-    except:
-        outfh = sys.stdout
-
-    notaxfhout = None
-    if noTaxoFile:
-        notaxfhout = open(noTaxoFile, 'w')
 
     silva_first_pass = True  # open only once silva BDB
     gg_first_pass = True  # open only gg once BDB
@@ -464,7 +431,7 @@ if __name__=='__main__':
     allTaxo = {}
     allTaxId = {}
     try:
-        line = tabfh.readline()
+        line = args.tabfh.readline()
         lineNb = 1
     except EOFError, err:
         print >>sys.stderr, err
@@ -476,46 +443,46 @@ if __name__=='__main__':
         description = ''
         fld = line.split()
         if line == '\n':
-            line = tabfh.readline()
+            line = args.tabfh.readline()
             continue
         try:
-            fldInfo = fld[args.column - 1].split(args.separator)
+            fldcolumn = fld[args.column - 1].split(args.separator)
         except:
-            print >>sys.stderr,  TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s\n --> %s" % (line, lineNb))
+            print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
             sys.exit()
 
         acc = ''
         db = ''
-        if len(fldInfo) == 5:
+        if len(fldcolumn) == 5:
             # PF8/Pathoquest
             if args.database:
                 db = args.database
             else:
-                db = fldInfo[2]
-            acc = fldInfo[3].split('.')[0]
-        elif len(fldInfo) == 2 or len(fldInfo) == 3:
+                db = fldcolumn[2]
+            acc = fldcolumn[3].split('.')[0]
+        elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
             # Lionel extraction
             if args.database:
                 db = args.database
             else:
-                db = fldInfo[0]
-            if len(fldInfo) == 3 and fldInfo[1] == '':
-                acc = fldInfo[2].split('.')[0]
+                db = fldcolumn[0]
+            if len(fldcolumn) == 3 and fldcolumn[1] == '':
+                acc = fldcolumn[2].split('.')[0]
             else:
-                acc = fldInfo[1].split('.')[0]
-        elif len(fldInfo) == 1 and args.database:
+                acc = fldcolumn[1].split('.')[0]
+        elif len(fldcolumn) == 1 and args.database:
                 db = args.database
-                acc = fldInfo[0]
+                acc = fldcolumn[0]
 
         if not acc or not db:
-            if not splitFile:
-                print >>outfh, line[:-1]
-            if noTaxoFile:
-                print >>notaxfhout,  line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: :%s in line %s" % (fld[args.column - 1], lineNb))
+            if not args.splitfile:
+                print >>args.outfh, line[:-1]
+            if args.notaxofh:
+                print >>args.notaxofh,  line[:-1]
+            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[args.column - 1], lineNb))
 
             try:
-                line = tabfh.readline()
+                line = args.tabfh.readline()
                 lineNb += 1
             except EOFError, err:
                 print >>sys.stderr, err
@@ -524,9 +491,9 @@ if __name__=='__main__':
             continue
         elif db not in ['silva', 'gg']:
             l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
-            if cnt_cards == max_cards:
+            if cnt_cards == args.max_cards:
                 allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, ncbi_osVSocBDB)
-                printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile)
+                printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
                 l_cards = ""
                 l_lines = []
                 cnt_cards = 0
@@ -570,15 +537,15 @@ if __name__=='__main__':
                     taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, gg_accVosocBDB)
 
             if taxonomy:
-                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
+                print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
             else:
-                if noTaxoFile:
-                    print >>notaxfhout, line[:-1]
-                if not splitFile:
-                    print >>outfh, line[:-1]
+                if args.notaxofh:
+                    print >>args.notaxofh, line[:-1]
+                if not args.splitFile:
+                    print >>args.outfh, line[:-1]
 
         try:
-            line = tabfh.readline()
+            line = args.tabfh.readline()
             lineNb += 1
         except EOFError, err:
             print >>sys.stderr, err
@@ -588,8 +555,8 @@ if __name__=='__main__':
         lineNb += 1
 
     if cnt_cards != 0:
-        allTaxo = doGoldenMulti(allTaxo, l_cards, DE, allTaxId, ncbi_osVSocBDB)
-        printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile)
+        allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, ncbi_osVSocBDB)
+        printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
 
-    tabfh.close()
+    args.tabfh.close()
     ncbi_osVSocBDB.close()
