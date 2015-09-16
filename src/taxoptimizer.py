@@ -302,7 +302,7 @@ def extractTaxoFrom_osVSocBDB(acc, allTaxo, allTaxId, BDB):
         allTaxo[acc]['taxoFull'] = allTaxId[orgName]
         allTaxo[acc]['taxoLight'] = ''
         taxonomy = allTaxId[orgName]
-    return taxonomy,  allTaxo, allTaxId
+    return taxonomy, allTaxo, allTaxId
 
 
 def extractTaxoFrom_osVSocBDB_multi(acc, allTaxo, allTaxId, BDB):
@@ -329,15 +329,15 @@ def extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, BDB):
         allTaxo[acc]['orgName'] = os_oc_fld[0]
         allTaxo[acc]['taxoFull'] = os_oc_fld[1]
 
-        return allTaxo[acc]['taxoFull'],  allTaxo
+        return allTaxo[acc]['taxoFull'], allTaxo
     else:
-        return '',  allTaxo
+        return '', allTaxo
+
 ##############################################################################
 #
 #            MAIN
 #
 ##############################################################################
-
 
 
 if __name__ == '__main__':
@@ -395,14 +395,13 @@ if __name__ == '__main__':
 
     golden_options = parser.add_argument_group(title="Golden options", description=None)
     golden_options.add_argument("-m", "--max_cards",
-                                 action='store',
-                                 dest='max_cards',
-                                 type=int,
-                                 help='Maximum cards number use by Golden2.0 in analyses',
-                                 default=500)
+                                action='store',
+                                dest='max_cards',
+                                type=int,
+                                help='Maximum cards number use by Golden2.0 in analyses',
+                                default=500)
 
     args = parser.parse_args()
-
 
     from bsddb import db as bdb
 
@@ -415,7 +414,6 @@ if __name__ == '__main__':
         TMP_PATH = "/tmp"
 
     # ===== Tabulated file parsing
-
 
     silva_first_pass = True  # open only once silva BDB
     gg_first_pass = True  # open only gg once BDB
@@ -478,7 +476,7 @@ if __name__ == '__main__':
             if not args.splitfile:
                 print >>args.outfh, line[:-1]
             if args.notaxofh:
-                print >>args.notaxofh,  line[:-1]
+                print >>args.notaxofh, line[:-1]
             print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[args.column - 1], lineNb))
 
             try:
