@@ -551,7 +551,7 @@ if __name__ == '__main__':
     if args.tesxtfh:
         # print >>sys.stderr, 'beginning tree file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            tree_repr = rankoptimizerlib.to_tree(taxo_tree, qrName=False)
+            tree_repr = rankoptimizerlib.to_tree(taxo_tree, query_name=False)
             print >>args.tesxtfh, tree_repr
         except IOError, err:
             print >>sys.stderr, err
@@ -566,7 +566,7 @@ if __name__ == '__main__':
     if args.kronafh:
         # print >>sys.stderr, 'beginning xml krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, args.kronahome, kronaScriptOnServer=args.jslocal)
+            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, args.kronahome, krona_js_on_server=args.jslocal)
             krona_xml.krona()
         except IOError, err:
             print >>sys.stderr, err
@@ -574,7 +574,7 @@ if __name__ == '__main__':
     if args.htmlxmlfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, kronaScriptOnServer=args.jslocal)
+            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, krona_js_on_server=args.jslocal)
             krona_xml.krona_html()
         except IOError, err:
             print >>sys.stderr, err
@@ -582,7 +582,7 @@ if __name__ == '__main__':
     if args.htmljsonfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, kronaScriptOnServer=args.jslocal)
+            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, krona_js_on_server=args.jslocal)
             krona_json.krona_html()
         except IOError, err:
             print >>sys.stderr, err
