@@ -344,12 +344,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='taxoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description="")
+                                     description="Add NCBI Taxonomy database information in a blast output report (m8 format).")
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
     general_options.add_argument("-i", "--in", dest="tabfh",
-                                 help="Tabulated file. (Example, Blast m8 file)",
+                                 help="Tabulated input file. (Example, Blast m8 file)",
                                  metavar="File",
                                  type=file,
                                  default=sys.stdin)
@@ -364,7 +364,7 @@ if __name__ == '__main__':
                                  action='store',
                                  dest='column',
                                  type=int,
-                                 help='Column number to parse',
+                                 help='Column\'s number with ID and database informations for all HSPs',
                                  default=2)
     general_options.add_argument("-s", "--separator",
                                  dest="separator", metavar="str", type=str,
@@ -373,17 +373,17 @@ if __name__ == '__main__':
     general_options.add_argument('-d', '---database', metavar='str',
                                  dest='database',
                                  type=str,
-                                 help="Limit taxomnomic research in this database",
+                                 help="Database to use. Supposed that all HSPs match this database.",
                                  )
     general_options.add_argument("-e", "--description",
                                  dest="description",
-                                 help="Add description (DE) in output",
+                                 help="Add database description (DE) in the output",
                                  action='store_true',
                                  default=False,)
 
     general_options.add_argument("-x", "--splitfile",
                                  dest="splitfile",
-                                 help="Only write line with taxonomy in output file.",
+                                 help="Only show lines with a taxonomy correspondance in the NCBI taxomomy database. Could be used with -m option.",
                                  action='store_true',
                                  default=False,)
     general_options.add_argument("-f", "--no_taxo_file",
@@ -391,7 +391,7 @@ if __name__ == '__main__':
                                  dest='notaxofh',
                                  metavar="File",
                                  type=argparse.FileType('w'),
-                                 help='Only write line without taxonomy in this file. Could be use with -x option',)
+                                 help='Only show lines without a taxonomy correspondance in the NCBI taxomomy database. Could be used with -x option.',)
 
     golden_options = parser.add_argument_group(title="Golden options", description=None)
     golden_options.add_argument("-m", "--max_cards",
