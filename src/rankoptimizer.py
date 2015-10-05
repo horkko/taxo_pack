@@ -574,7 +574,7 @@ if __name__ == '__main__':
     if args.htmlxmlfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, krona_js_on_server=args.jslocal)
+            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.kronahome, krona_js_on_server=args.jslocal)
             krona_xml.krona_html()
         except IOError, err:
             print >>sys.stderr, err
@@ -582,7 +582,7 @@ if __name__ == '__main__':
     if args.htmljsonfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, kronaURL=args.kronahome, krona_js_on_server=args.jslocal)
+            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.kronahome, krona_js_on_server=args.jslocal)
             krona_json.krona_html()
         except IOError, err:
             print >>sys.stderr, err
