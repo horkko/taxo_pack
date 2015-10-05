@@ -370,7 +370,7 @@ if __name__ == '__main__':
                                  dest="separator", metavar="str", type=str,
                                  help="Separator in database AC",
                                  default='|')
-    general_options.add_argument('-d', '---database', metavar='str',
+    general_options.add_argument('-d', '--database', metavar='str',
                                  dest='database',
                                  type=str,
                                  help="Database to use. Supposed that all HSPs match this database.",
