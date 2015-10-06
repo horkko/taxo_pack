@@ -27,7 +27,6 @@ if SHARE not in sys.path:
 
 global krona_js
 krona_js = SHARE + '/krona-2.0.gensoft.js'
-print krona_js
 
 class Taxon(object):
     def __init__(self, name=None, rank=''):
