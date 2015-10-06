@@ -12,14 +12,6 @@ import sys
 import argparse
 
 
-class KronaExtractError(object):
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[kronaextract] " + self.err
-
-
 def extract_reads_from_all_children(nodes, list_of_reads):
     for node in nodes:
         # reads = node.find('reads')
@@ -46,39 +38,40 @@ kronaextract use Krona 2.1, an interactive metagenomic visualization tool in a W
 """
     parser = argparse.ArgumentParser(prog='kronaextract.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog)
-    parser.add_argument("-i", "--in",
-                        dest="krona_xml_file",
-                        help="Xml input file with Krona 2.1 Specification. A rankoptimizer ouptut file is recommended)",
-                        metavar="file",
-                        required=True)
-    parser.add_argument("-n", "--taxo_name",
-                        dest="taxoname", metavar="STRING",
-                        help="Taxonomic name.")
-    parser.add_argument("-o", "--out", dest="outfile",
-                        help="Output file.",
-                        type=argparse.FileType('w'),
-                        metavar="file")
-    parser.add_argument("-s", "--split_prefix",
-                        dest="prefix", metavar="str",
-                        help="Split output file into two files with the given prefix name")
+    general_options = parser.add_argument_group(title="Options", description=None)
+    general_options.add_argument("-i", "--in",
+                                 dest="krona_xml_file",
+                                 help="Xml input file with Krona 2.1 Specification. A rankoptimizer ouptut file is recommended)",
+                                 metavar="file",
+                                 required=True)
+    general_options.add_argument("-n", "--taxo_name",
+                                 dest="taxoname", metavar="STRING",
+                                 help="Taxonomic name.")
+    general_options.add_argument("-o", "--out", dest="outfile",
+                                 help="Output file.",
+                                 type=argparse.FileType('w'),
+                                 metavar="file")
+    general_options.add_argument("-s", "--split_prefix",
+                                 dest="prefix", metavar="str",
+                                 help="Split output file into two files with the given prefix name")
 
-    opts, args = parser.parse_args()
+    args = parser.parse_args()
 
     bl_line = 0
 
     # ===== Tabulated file parsing
     try:
-        xmltree = ET.parse(opts.krona_xml_file)
+        xmltree = ET.parse(args.krona_xml_file)
     except IOError, err:
-        print >>sys.stderr, KronaExtractError(err)
+        print >>sys.stderr, err
         sys.exit(0)
 
     root = xmltree.getroot()
 
-    nodes = root.findall(".//node/[@name='%s']" % opts.taxoname)
+    nodes = root.findall(".//node/[@name='%s']" % args.taxoname)
     list_of_reads = []
     if not nodes:
-        print >>sys.stderr, 'No result for: %s' % opts.taxoname
+        print >>sys.stderr, 'No result for: %s' % args.taxoname
         sys.exit()
     for nd in nodes:
         reads = nd.find('reads')
@@ -96,8 +89,8 @@ kronaextract use Krona 2.1, an interactive metagenomic visualization tool in a W
 #            print 'tout est ok: %s reads' % len(list_of_reads)
 
     if args.prefix:
-        outfh_name = open(opts.prefix + '.seq', 'w')
-        outfh_offset = open(opts.prefix + '.offset', 'w')
+        outfh_name = open(args.prefix + '.seq', 'w')
+        outfh_offset = open(args.prefix + '.offset', 'w')
 
     for read_info in list_of_reads:
         if args.outfile:
