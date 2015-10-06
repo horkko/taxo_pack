@@ -138,7 +138,7 @@ def insert_taxo_tot(taxo_tree, query, pos_line, taxonomy, rank_in_tree, identica
                 else:
                     parent.add_child(name, '')
             child = parent.get_child(name)
-            # child.add_queries((query,  pos_line))
+            # child.add_queries((query, pos_line))
             if identical_read and '_' in query:  # # supposed name_n
                 n = query.split('_')[-1]
                 try:
@@ -161,7 +161,7 @@ def insert_taxo_tot(taxo_tree, query, pos_line, taxonomy, rank_in_tree, identica
             else:
                 parent.add_child(name, '')
         child = parent.get_child(name)
-        child.add_queries((query,  pos_line))
+        child.add_queries((query, pos_line))
         if identical_read and '_' in query:  # # supposed name_n
             n = query.split('_')[-1]
             try:
@@ -267,7 +267,7 @@ def reduce_by_delta(one_query, query, delta_score):
     # kept only bline in a delta range
     indx = []
     for i in range(len(one_query['delta'])):
-        if one_query['delta'][i][0] > (one_query['max_score'][0] * (1 + (delta_score*0.01))):
+        if one_query['delta'][i][0] > (one_query['max_score'][0] * (1 + (delta_score * 0.01))):
             indx.append(i)
     n = 0
     for j in indx:
@@ -446,7 +446,7 @@ if __name__ == '__main__':
                 num = fld[scorecolumn]
             hsp_score = float(num)
         except StandardError, err:
-            print >>sys.stderr, RankOptimizerError("score column number error:-C %s in line %s:%s" % (scorecolumn+1, blast_line, err))
+            print >>sys.stderr, RankOptimizerError("score column number error:-C %s in line %s:%s" % (scorecolumn + 1, blast_line, err))
             sys.exit()
         try:
             sbjct_taxonomy = fld[taxcolumn]
@@ -460,7 +460,7 @@ if __name__ == '__main__':
         if query in query_infos:
             if not query_infos[query]['max_score'][1] or (sbjct_taxonomy and hsp_score > query_infos[query]['max_score'][0]):
                 query_infos[query]['max_score'] = (hsp_score, sbjct_taxonomy, pos_line)
-            elif (args.delta and sbjct_taxonomy) and (hsp_score > (query_infos[query]['max_score'][0] * (1 - (args.delta*0.01)))):
+            elif (args.delta and sbjct_taxonomy) and (hsp_score > (query_infos[query]['max_score'][0] * (1 - (args.delta * 0.01)))):
                 # stock all at one moment. reduce after.
                 if 'delta' in query_infos[query]:
                     query_infos[query]['delta'].append((hsp_score, sbjct_taxonomy, pos_line))

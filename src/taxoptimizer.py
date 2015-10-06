@@ -19,7 +19,7 @@ try:
     GOLDENDATA = os.environ['GOLDENDATA']
 except:
     GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
-    #GOLDENDATA = "/mount/banques/prod/index/golden/"
+    # GOLDENDATA = "/mount/banques/prod/index/golden/"
     os.environ['GOLDENDATA'] = GOLDENDATA
 
 try:
