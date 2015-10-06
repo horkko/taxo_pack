@@ -279,7 +279,7 @@ def reduce_by_delta(one_query, query, delta_score):
 
 
 def lca(tree):
-    if tree.hasOneChild():
+    if tree.has_one_child():
         tree = tree.childs[0]
         return lca(tree)
     else:
@@ -319,6 +319,7 @@ if __name__ == '__main__':
 
     general_options.add_argument("-i", "--in", dest="tabfh",
                                  help="Tabulated input file. Blast report with NCBI Taxonomy database informations from taxoptimizer programm.",
+                                 type=file,
                                  metavar="File",
                                  required=True)
 
@@ -417,7 +418,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # ### args.kronahome = 'http://bioweb2.pasteur.fr/krona/src' ==> Ne fonctionne plus
+    # args.kronahome = 'http://bioweb2.pasteur.fr/krona/src'  # ==> Ne fonctionne plus
 
     query_infos = {}
     taxcolumn = args.taxcolumn - 1
@@ -556,11 +557,11 @@ if __name__ == '__main__':
     # print >>sys.stderr, p.get_memory_info()
     # args.tabfh.close()
     # ### output
-    if args.tesxtfh:
+    if args.textfh:
         # print >>sys.stderr, 'beginning tree file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
             tree_repr = rankoptimizerlib.to_tree(taxo_tree, query_name=False)
-            print >>args.tesxtfh, tree_repr
+            print >>args.textfh, tree_repr
         except IOError, err:
             print >>sys.stderr, err
 
