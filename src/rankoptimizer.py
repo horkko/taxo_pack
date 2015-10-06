@@ -5,7 +5,7 @@
 # maufrais@pasteur.fr
 #
 
-# version 1.6
+# version 2.0
 
 import os
 import sys
@@ -301,8 +301,16 @@ def usage():
 
 if __name__ == '__main__':
     # ===== Command line parser
+    usage = "rankoptimizer [options] -i <FILE>"
+    epilog = """
+    rankoptimizer analyze the taxonomy abundance of a blast output pre-process by the taxoptimizer program.
+    The taxonomic abundance contains in the blast output could be show by Krona 2.1 an interactive metagenomic visualization in a Web browser.
+
+    Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (http://sourceforge.net/p/krona/home/krona/):
+    Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
+"""
     parser = argparse.ArgumentParser(prog='rankoptimizer.py',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog,
                                      description="Statistical analyses of the NCBI Taxonomy informations contained in a taxoptimizer file.\
                                      Output file could be visualized by Krona 2.1 an interactive metagenomic visualization in a \
                                      Web browser.")
