@@ -393,10 +393,10 @@ class Krona (KronaDTD):
         self.node(self.taxo_tree)
         self.end_krona()
 
-    def krona_html(self):
+    def krona_html(self, krona_jsfh=None):
         self.indent = 0
         # xmlKrona = KronaDTD(self.outfh, self.indent, self.krona_url, self.krona_js_on_server)
-        self.header_html()
+        self.header_html(krona_jsfh)
         self.start_krona()
         self.datasets([self.file_name])
         # color_values = {'attribute':'', 'default':'true'}
@@ -765,9 +765,9 @@ class KronaJSON(KronaJSONDTD):
         self.node(self.taxo_tree)
         self.end_krona()
 
-    def krona_html(self):
+    def krona_html(self, krona_jsfh=None):
         self.indent = 0
-        self.header_html()
+        self.header_html(krona_jsfh)
         self.indent = 0
         self.start_krona_with_attr()
         self.datasets(self.file_name)
