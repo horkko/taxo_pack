@@ -381,10 +381,10 @@ if __name__ == '__main__':
 
     specific_options = parser.add_argument_group(title="Specific options", description=None)
 
-    specific_options.add_argument("-u", "--url",
-                                  dest="kronahome", metavar="str", type=str,
-                                  help="KronaTools-2.1 http server address",
-                                  default='http://krona.sourceforge.net')
+#     specific_options.add_argument("-u", "--url",
+#                                   dest="kronahome", metavar="str", type=str,
+#                                   help="KronaTools-2.1 http server address",
+#                                   default='http://krona.sourceforge.net/src')
 
 #     specific_options.add_argument('-s', '--local',
 #                                   dest='jslocal',
@@ -399,7 +399,7 @@ if __name__ == '__main__':
                                   type=file,
                                   metavar=file,
                                   help="Krona javascript.",
-                                  )
+                                  required=True)
 
     specific_options.add_argument("-d", "--delta",
                                   dest="delta",
