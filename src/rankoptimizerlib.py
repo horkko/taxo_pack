@@ -8,25 +8,15 @@
 
 import os
 import sys
-try:
-    LIB = os.environ['RANKOPTIMIZERLIB']
-except:
-    LIB = '/usr/local/bin'
-    LIB = '../lib'
+# try:
+#     LIB = os.environ['RANKOPTIMIZERLIB']
+# except:
+#     LIB = '/usr/local/bin'
+#     LIB = '../lib'
+# 
+# if LIB not in sys.path:
+#     sys.path.append(LIB)
 
-if LIB not in sys.path:
-    sys.path.append(LIB)
-
-try:
-    SHARE = os.environ['RANKOPTIMIZERSHARE']
-except:
-    SHARE = '/Users/maufrais/Developpements2/taxo_pack/lib/KronaTools-2.1/src'
-
-if SHARE not in sys.path:
-    sys.path.append(SHARE)
-
-global krona_js
-krona_js = SHARE + '/krona-2.0.gensoft.js'
 
 class Taxon(object):
     def __init__(self, name=None, rank=''):

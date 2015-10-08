@@ -12,14 +12,25 @@ import sys
 import argparse
 
 
-try:
-    LIB = os.environ['RANKOPTIMIZERLIB']
-except:
-    LIB = '/usr/local/bin'
-    LIB = '/Users/maufrais/Developpements2/taxo_pack/lib'
-
-if LIB not in sys.path:
-    sys.path.append(LIB)
+# try:
+#     SHARE = os.environ['RANKOPTIMIZERSHARE']
+# except:
+#     SHARE = '/Users/maufrais/Developpements2/taxo_pack/lib/KronaTools-2.1/src'
+# 
+# if SHARE not in sys.path:
+#     sys.path.append(SHARE)
+# 
+# global krona_js
+# krona_js = SHARE + '/krona-2.0.gensoft.js'
+# 
+# try:
+#     LIB = os.environ['RANKOPTIMIZERLIB']
+# except:
+#     LIB = '/usr/local/bin'
+#     LIB = '/Users/maufrais/Developpements2/taxo_pack/lib'
+# 
+# if LIB not in sys.path:
+#     sys.path.append(LIB)
 
 import rankoptimizerlib
 
