@@ -1,0 +1,1 @@
+include README doc/*.txt doc/*.pdf doc/*.html
