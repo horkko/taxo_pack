@@ -305,7 +305,7 @@ def lca(tree):
 
 def usage():
     print """
-    rankoptimizer use Krona 2.1 an interactive metagenomic visualization tool in a Web browser.  (http://sourceforge.net/p/krona/home/krona/):
+    rankoptimizer use Krona an interactive metagenomic visualization tool in a Web browser. (https://github.com/marbl/Krona)
     Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
 
 """
@@ -323,13 +323,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='rankoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog,
                                      description="Statistical analyses of the NCBI Taxonomy informations contained in a taxoptimizer file.\
-                                     Output file could be visualized by Krona 2.1 an interactive metagenomic visualization in a \
+                                     Output file could be visualized by Krona interactive metagenomic visualization in a \
                                      Web browser.")
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
     general_options.add_argument("-i", "--in", dest="tabfh",
                                  help="Tabulated input file. Blast report with NCBI Taxonomy database informations from taxoptimizer programm.",
+                                 type=file,
+                                 metavar="File",
+                                 required=True)
+
+    general_options.add_argument('-s', '--krona_js',
+                                 dest='krona_jsfh',
+                                 help="Krona javascript library. Official distribution: https://github.com/marbl/Krona/blob/master/KronaTools/src/krona-2.0.js",
                                  type=file,
                                  metavar="File",
                                  required=True)
@@ -353,7 +360,7 @@ if __name__ == '__main__':
                                 dest='kronafh',
                                 metavar="File",
                                 type=argparse.FileType('w'),
-                                help='xml output file with Krona 2.1 Specification.',)
+                                help='xml output file with Krona Specification.',)
     output_options.add_argument("-t", "--text",
                                 action='store',
                                 dest='textfh',
@@ -365,25 +372,25 @@ if __name__ == '__main__':
                                 dest='htmlxmlfh',
                                 metavar="File",
                                 type=argparse.FileType('w'),
-                                help='html output with Krona 2.0 specification and Krona 2.1 javascript library. xml style',)
+                                help='html output with Krona specification and Krona javascript library. xml style',)
     output_options.add_argument("-V", "--htmlj",
                                 action='store',
                                 dest='htmljsonfh',
                                 metavar="File",
                                 type=argparse.FileType('w'),
-                                help='html output with Krona 2.0 specification and Krona 2.1 javascript library. json style',)
+                                help='html output with Krona specification and Krona javascript library. json style',)
     output_options.add_argument("-j", "--json",
                                 action='store',
                                 dest='jsonfh',
                                 metavar="File",
                                 type=argparse.FileType('w'),
-                                help='json output with Krona 2.1 specification',)
+                                help='json output with Krona specification',)
     output_options.add_argument("-p", "--dump",
                                 action='store',
                                 dest='dumpfh',
                                 metavar="File",
                                 type=argparse.FileType('w'),
-                                help='Python dump output with Krona 2.1 specification.',)
+                                help='Python dump output with Krona specification.',)
     output_options.add_argument("-a", "--lca",
                                 dest="lca",
                                 help="Report lowest common ancestor of the taxonomic abundance",
@@ -391,23 +398,6 @@ if __name__ == '__main__':
                                 default=False,)
 
     specific_options = parser.add_argument_group(title="Specific options", description=None)
-
-#     specific_options.add_argument("-u", "--url",
-#                                   dest="kronahome", metavar="str", type=str,
-#                                   help="KronaTools-2.1 http server address",
-#                                   default='http://krona.sourceforge.net/src')
-
-#     specific_options.add_argument('-s', '--local',
-#                                   dest='jslocal',
-#                                   action='store_true',
-#                                   default=False,
-#                                   help="Local Krona javascript.",
-#                                   )
-
-    specific_options.add_argument('-s', '--krona_path',
-                                  dest='krona_path',
-                                  help="Krona distribution path.",
-                                  required=True)
 
     specific_options.add_argument("-d", "--delta",
                                   dest="delta",
@@ -434,8 +424,6 @@ if __name__ == '__main__':
                                   default=False,)
 
     args = parser.parse_args()
-
-    # args.kronahome = 'http://bioweb2.pasteur.fr/krona/src'  # ==> Ne fonctionne plus
 
     query_infos = {}
     taxcolumn = args.taxcolumn - 1
@@ -506,7 +494,6 @@ if __name__ == '__main__':
             print >>sys.stderr, RankOptimizerError("%s line:%s" % (err, blast_line))
             sys.exit()
 
-    # tabfhin.close()
     if args.delta:
         for query in query_infos.keys():
             if 'delta' in query_infos[query] and len(query_infos[query]['delta']) > 1:
@@ -515,9 +502,7 @@ if __name__ == '__main__':
 
     # ## Construct tree structure
     taxo_tree = rankoptimizerlib.Taxon('root')
-    # print >>sys.stderr, 'beginning insert taxo', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
 
-    # p = psutil.Process(os.getpid())
     for query, infos in query_infos.items():
         pos_line = infos['max_score'][2]
         args.tabfh.seek(pos_line)
@@ -569,14 +554,9 @@ if __name__ == '__main__':
                     all_delta_taxo.append(sbjct_taxonomy)
         # print >>sys.stderr, p.get_memory_info()
         query_infos.pop(query)
-    # print >>sys.stderr,  os.popen('ps -p %d -l' %(os.getpid())).read()
-    # print >>sys.stderr,  int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")).read())
-    # print >>sys.stderr,  int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "vsz")).read())
-    # print >>sys.stderr, p.get_memory_info()
-    # args.tabfh.close()
+
     # ### output
     if args.textfh:
-        # print >>sys.stderr, 'beginning tree file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
             tree_repr = rankoptimizerlib.to_tree(taxo_tree, query_name=False)
             print >>args.textfh, tree_repr
@@ -591,28 +571,25 @@ if __name__ == '__main__':
             print >>sys.stderr, err
 
     if args.kronafh:
-        # print >>sys.stderr, 'beginning xml krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, krona_local=True)
+            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree)
             krona_xml.krona()
         except IOError, err:
             print >>sys.stderr, err
 
     if args.htmlxmlfh:
-        # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
-            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=True)
-            krona_xml.krona_html(krona_jsfh)
+            args.krona_jsfh.seek(0)
+            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree)
+            krona_xml.krona_html(args.krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err
 
     if args.htmljsonfh:
-        # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
-            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=True)
-            krona_json.krona_html(krona_jsfh)
+            args.krona_jsfh.seek(0)
+            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree)
+            krona_json.krona_html(args.krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err
 

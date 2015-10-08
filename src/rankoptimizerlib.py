@@ -158,61 +158,28 @@ class ElementXML(object):
 
 
 class KronaDTD (ElementXML):
-    def __init__(self, outfh=None, indent=None, krona_url='.', krona_local=False, collapse='true', key='true'):
+    def __init__(self, outfh=None, indent=None, collapse='true', key='true'):
         ElementXML.__init__(self, outfh=outfh, indent=indent)
         self.elems_attributes = {'krona': {'collapse': collapse, 'key': key},
                                  'attributes': {'magnitude': 'reads'},
                                  }
-        self.krona_url = krona_url
-        self.krona_local = krona_local
-
-    def header_html_bad(self):
-        print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <link rel="shortcut icon" href="%s/img/favicon.ico"/>
-    <script id="notfound">window.onload=function(){document.body.innerHTML="Could not get resources from \"%s\"}</script>""" % (self.krona_url, self.krona_url)
-
-        if not self.krona_local:
-            print >>self.outfh, """<script src="%s/krona-2.0.js"></script>""" % self.krona_url
-        else:
-            print >>self.outfh, '<script type="text/javascript">'
-            krona_jsfh = open(krona_js)
-            line = krona_jsfh.readline()
-            while line:
-                print >>self.outfh, '    ', line.replace('\n', '')
-                line = krona_jsfh.readline()
-            print >>self.outfh, '</script>'
-        print >>self.outfh, """</head>
-<body>"""
-        # if not self.krona_local:
-        print >>self.outfh, """
-  <img id="hiddenImage" src="%s/img/hidden.png" style="display:none"/>
-  <img id="loadingImage" src="%s/img/loading.gif" style="display:none"/>""" % (self.krona_url, self.krona_url)
-        print >>self.outfh, """
-  <noscript>Javascript must be enabled to view this page.</noscript>
-  <div style="display:none">"""
 
     def header_html(self, krona_jsfh=None):
         print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
   <meta charset="utf-8"/>"""
-        if not self.krona_local:
-            print >>self.outfh, """<script src="%s/krona-2.0.js"></script>""" % self.krona_url
-        else:
-            print >>self.outfh, '<script type="text/javascript">'
+        print >>self.outfh, '<script type="text/javascript">'
+        line = krona_jsfh.readline()
+        while line:
+            # ## js modification: no img loaded
+            if "getElementById('hiddenImage');" in line:
+                print >>self.outfh, '    /*'
+            if "getElementById('loadingImage');" in line:
+                print >>self.outfh, '    */'
+            print >>self.outfh, '    ', line.replace('\n', '')
             line = krona_jsfh.readline()
-            while line:
-                # ## js modification: no img loaded
-                if "getElementById('hiddenImage');" in line:
-                    print >>self.outfh, '    /*'
-                if "getElementById('loadingImage');" in line:
-                    print >>self.outfh, '    */'
-                print >>self.outfh, '    ', line.replace('\n', '')
-                line = krona_jsfh.readline()
-            print >>self.outfh, '</script>'
+        print >>self.outfh, '</script>'
         print >>self.outfh, """</head>
 <body>"""
         print >>self.outfh, """
@@ -352,11 +319,11 @@ class KronaDTD (ElementXML):
 
 
 class Krona (KronaDTD):
-    def __init__(self,  outfh=None, file_name=None, taxo_tree=None, krona_url='.', krona_local=False, collapse='false', key='true'):
+    def __init__(self,  outfh=None, file_name=None, taxo_tree=None, collapse='false', key='true'):
         """
         * Object for translating one treeobject into one Krona xml file.
         """
-        KronaDTD.__init__(self, outfh=outfh, indent=0, krona_url=krona_url, krona_local=krona_local, collapse=collapse, key=key)
+        KronaDTD.__init__(self, outfh=outfh, indent=0, collapse=collapse, key=key)
         self.taxo_tree = taxo_tree
         self.file_name = file_name
 
@@ -496,35 +463,11 @@ class ElementJSON(object):
 
 class KronaJSONDTD (ElementJSON):
 
-    def __init__(self, outfh=None, indent=None, krona_url='.', krona_local=False, collapse='true', key='true'):
+    def __init__(self, outfh=None, indent=None, collapse='true', key='true'):
         ElementJSON.__init__(self, outfh=outfh, indent=indent)
         self.elems_attributes = {'krona': {'_collapse': collapse, '_key': key},
                                  'attributes': {'_magnitude': 'reads'},
                                  }
-
-        self.krona_url = krona_url
-        self.krona_local = krona_local
-
-    def header_html_bad(self):
-        print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <link rel="shortcut icon" href="%s/img/favicon.ico"/>
-    <script id="notfound">window.onload=function(){document.body.innerHTML="Could not get resources from \"%s\"}</script>""" % (self.krona_url, self.krona_url)
-        print >>self.outfh, """<script type='text/javascript' src='https://code.jquery.com/jquery-git.js'></script>
-    <script type='text/javascript' src='https://x2js.googlecode.com/hg/xml2json.js'></script>"""
-        if not self.krona_local:
-            print >>self.outfh, """<script src="%s/krona-2.0.js"></script>""" % self.krona_url
-        else:
-            print >>self.outfh, '<script type="text/javascript">'
-            krona_jsfh = open(krona_js)
-            line = krona_jsfh.readline()
-            while line:
-                print >>self.outfh, '    ', line.replace('\n', '')
-                line = krona_jsfh.readline()
-        print >>self.outfh, '<script>'
-        print >>self.outfh, "var jsontest = "
 
     def header_html(self, krona_jsfh=None):
         print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -533,19 +476,16 @@ class KronaJSONDTD (ElementJSON):
   <meta charset="utf-8"/>"""
         print >>self.outfh, """<script type='text/javascript' src='https://code.jquery.com/jquery-git.js'></script>
     <script type='text/javascript' src='https://x2js.googlecode.com/hg/xml2json.js'></script>"""
-        if not self.krona_local:
-            print >>self.outfh, """<script src="%s/krona-2.0.js"></script>""" % self.krona_url
-        else:
-            print >>self.outfh, '<script type="text/javascript">'
+        print >>self.outfh, '<script type="text/javascript">'
+        line = krona_jsfh.readline()
+        while line:
+            # ## js modification: no img loaded
+            if "getElementById('hiddenImage');" in line:
+                print >>self.outfh, '    /*'
+            if "getElementById('loadingImage');" in line:
+                print >>self.outfh, '    */'
+            print >>self.outfh, '    ', line.replace('\n', '')
             line = krona_jsfh.readline()
-            while line:
-                # ## js modification: no img loaded
-                if "getElementById('hiddenImage');" in line:
-                    print >>self.outfh, '    /*'
-                if "getElementById('loadingImage');" in line:
-                    print >>self.outfh, '    */'
-                print >>self.outfh, '    ', line.replace('\n', '')
-                line = krona_jsfh.readline()
         print >>self.outfh, "var jsontest = "
 
     def header_html2(self):
@@ -731,11 +671,11 @@ class KronaJSONDTD (ElementJSON):
 
 
 class KronaJSON(KronaJSONDTD):
-    def __init__(self,  outfh=None, file_name=None, taxo_tree=None, krona_url='.', krona_local=False,  collapse='false', key='true'):
+    def __init__(self,  outfh=None, file_name=None, taxo_tree=None, collapse='false', key='true'):
         """
         * Object for translating one treeobject into one Krona xml file.
         """
-        KronaJSONDTD.__init__(self, outfh=outfh, indent=0, krona_url=krona_url, krona_local=krona_local, collapse=collapse, key=key)
+        KronaJSONDTD.__init__(self, outfh=outfh, indent=0, collapse=collapse, key=key)
         self.taxo_tree = taxo_tree
         self.file_name = file_name
 
@@ -758,6 +698,7 @@ class KronaJSON(KronaJSONDTD):
         self.end_krona()
         self.header_html2()
         self.footer_html()
+
 
 def _to_tree(taxon, name=True, s='', sv='', sd='.', query_name=False):
     if name:
