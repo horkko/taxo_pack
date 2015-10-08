@@ -393,12 +393,9 @@ if __name__ == '__main__':
 #                                   help="Local Krona javascript.",
 #                                   )
 
-    specific_options.add_argument('-s', '--krona_jsfh',
-                                  dest='krona_jsfh',
-                                  default=False,
-                                  type=file,
-                                  metavar=file,
-                                  help="Krona javascript.",
+    specific_options.add_argument('-s', '--krona_path',
+                                  dest='krona_path',
+                                  help="Krona distribution path.",
                                   required=True)
 
     specific_options.add_argument("-d", "--delta",
@@ -432,9 +429,7 @@ if __name__ == '__main__':
     query_infos = {}
     taxcolumn = args.taxcolumn - 1
     scorecolumn = args.scorecolumn - 1
-    jslocal = False
-    if args.krona_jsfh:
-        jslocal = True
+
     try:
         pos_line = args.tabfh.tell()
         line = args.tabfh.readline()
@@ -587,7 +582,7 @@ if __name__ == '__main__':
     if args.kronafh:
         # print >>sys.stderr, 'beginning xml krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, args.kronahome, krona_js_on_server=jslocal)
+            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, krona_local=False)
             krona_xml.krona()
         except IOError, err:
             print >>sys.stderr, err
@@ -595,16 +590,18 @@ if __name__ == '__main__':
     if args.htmlxmlfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.kronahome, krona_js_on_server=jslocal)
-            krona_xml.krona_html(args.krona_jsfh)
+            krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
+            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=False)
+            krona_xml.krona_html(krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err
 
     if args.htmljsonfh:
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.kronahome, krona_js_on_server=jslocal)
-            krona_json.krona_html(args.krona_jsfh)
+            krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
+            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=False)
+            krona_json.krona_html(krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err
 
