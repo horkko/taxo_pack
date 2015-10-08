@@ -582,7 +582,7 @@ if __name__ == '__main__':
     if args.kronafh:
         # print >>sys.stderr, 'beginning xml krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
-            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, krona_local=False)
+            krona_xml = rankoptimizerlib.Krona(args.kronafh, args.tabfh.name, taxo_tree, krona_local=True)
             krona_xml.krona()
         except IOError, err:
             print >>sys.stderr, err
@@ -591,7 +591,7 @@ if __name__ == '__main__':
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
             krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
-            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=False)
+            krona_xml = rankoptimizerlib.Krona(args.htmlxmlfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=True)
             krona_xml.krona_html(krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err
@@ -600,7 +600,7 @@ if __name__ == '__main__':
         # print >>sys.stderr, 'beginning html krona file writing', time.strftime("%y/%m/%d %H:%M:%S" , time.localtime(time.time()))
         try:
             krona_jsfh = open(args.krona_path + '/src/krona-2.0.js')
-            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=False)
+            krona_json = rankoptimizerlib.KronaJSON(args.htmljsonfh, args.tabfh.name, taxo_tree, krona_url=args.krona_path, krona_local=True)
             krona_json.krona_html(krona_jsfh)
         except IOError, err:
             print >>sys.stderr, err

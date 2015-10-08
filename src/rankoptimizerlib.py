@@ -208,29 +208,26 @@ class KronaDTD (ElementXML):
         print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <link rel="shortcut icon" href="%s/img/favicon.ico"/>
-    <script id="notfound">window.onload=function(){document.body.innerHTML="Could not get resources from \"%s\"}</script>""" % (self.krona_url, self.krona_url)
-
+  <meta charset="utf-8"/>"""
         if not self.krona_local:
             print >>self.outfh, """<script src="%s/krona-2.0.js"></script>""" % self.krona_url
         else:
             print >>self.outfh, '<script type="text/javascript">'
             line = krona_jsfh.readline()
             while line:
+                # ## js modification: no img loaded
+                if "getElementById('hiddenImage');" in line:
+                    print >>self.outfh, '    /*'
+                if "getElementById('loadingImage');" in line:
+                    print >>self.outfh, '    */'
                 print >>self.outfh, '    ', line.replace('\n', '')
                 line = krona_jsfh.readline()
             print >>self.outfh, '</script>'
         print >>self.outfh, """</head>
 <body>"""
-        # if not self.krona_local:
-        print >>self.outfh, """
-  <img id="hiddenImage" src="%s/img/hidden.png" style="display:none"/>
-  <img id="loadingImage" src="%s/img/loading.gif" style="display:none"/>""" % (self.krona_url, self.krona_url)
         print >>self.outfh, """
   <noscript>Javascript must be enabled to view this page.</noscript>
   <div style="display:none">"""
-
 
     def footer_html(self):
         print >>self.outfh, """
@@ -776,37 +773,6 @@ class KronaJSON(KronaJSONDTD):
         self.end_krona()
         self.header_html2()
         self.footer_html()
-
-#import newickTree_rankopti 
-
-
-# def toNewickTree(taxon, tree, Acc):
-#     p = 0
-#     # print len(taxon.childs)
-#     for taxa in taxon.childs:
-#         if not tree.left:
-#             tree.insertLeft(None)
-#             # tree.left.root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(len(taxa.queriesS))
-#             tree.left.root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(taxa.nb_querys)
-#             tree.left = toNewickTree(taxa, tree.left, Acc)
-#         elif not tree.right:
-#             tree.insertRight(None)
-#             # tree.right.root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(len(taxa.queriesS))
-#             tree.right.root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(taxa.nb_querys)
-#             tree.right = toNewickTree(taxa, tree.right, Acc)
-#         else:
-#             p = tree.appendOther(None)
-#             # tree.other[p].root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(len(taxa.queriesS))
-#             tree.other[p].root = taxa.name.replace(' ', '_').replace(':', '_').replace('.', '') + '#' + taxa.rank + ':' + str(taxa.nb_querys)
-#             tree.other[p] = toNewickTree(taxa, tree.other[p], Acc)
-#             p += 1
-#     return tree
-# 
-# 
-# def toDnd(taxon, Acc=False):
-#     tree = newickTree_rankopti.NewickTree('root')
-#     return toNewickTree(taxon, tree, Acc)
-
 
 def _to_tree(taxon, name=True, s='', sv='', sd='.', query_name=False):
     if name:
