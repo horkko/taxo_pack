@@ -536,14 +536,11 @@ class KronaJSONDTD (ElementJSON):
         print >>self.outfh, '<script>'
         print >>self.outfh, "var jsontest = "
 
-
     def header_html(self, krona_jsfh=None):
         print >>self.outfh, """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <link rel="shortcut icon" href="%s/img/favicon.ico"/>
-    <script id="notfound">window.onload=function(){document.body.innerHTML="Could not get resources from \"%s\"}</script>""" % (self.krona_url, self.krona_url)
+  <meta charset="utf-8"/>"""
         print >>self.outfh, """<script type='text/javascript' src='https://code.jquery.com/jquery-git.js'></script>
     <script type='text/javascript' src='https://x2js.googlecode.com/hg/xml2json.js'></script>"""
         if not self.krona_local:
@@ -552,11 +549,14 @@ class KronaJSONDTD (ElementJSON):
             print >>self.outfh, '<script type="text/javascript">'
             line = krona_jsfh.readline()
             while line:
+                # ## js modification: no img loaded
+                if "getElementById('hiddenImage');" in line:
+                    print >>self.outfh, '    /*'
+                if "getElementById('loadingImage');" in line:
+                    print >>self.outfh, '    */'
                 print >>self.outfh, '    ', line.replace('\n', '')
                 line = krona_jsfh.readline()
-        print >>self.outfh, '<script>'
         print >>self.outfh, "var jsontest = "
-
 
     def header_html2(self):
         print >>self.outfh, ';'
@@ -570,11 +570,6 @@ class KronaJSONDTD (ElementJSON):
         print >>self.outfh, '</script>'
         print >>self.outfh, """</head>
 <body>"""
-
-        # if not self.krona_local:
-        print >>self.outfh, """
-  <img id="hiddenImage" src="%s/hidden.png" style="display:none"/>
-  <img id="loadingImage" src="%s/loading.gif" style="display:none"/>""" % (self.krona_url, self.krona_url)
         print >>self.outfh, """
   <noscript>Javascript must be enabled to view this page.</noscript>
   <div style="display:none">
