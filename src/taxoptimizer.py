@@ -1,10 +1,10 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Corinne Maufrais
-# Institut Pasteur, DSI/CIB
-# maufrais@pasteur.fr
+# Institut Pasteur, Centre d'informatique pour les biologistes
+# corinne.maufrais@pasteur.fr
 #
-# golden improvement: vlegrand@pasteur.fr
 
 # version 2.0
 
@@ -12,6 +12,7 @@
 import os
 import sys
 import argparse
+from bsddb import db as bdb
 
 import Golden
 
@@ -22,28 +23,6 @@ except:
     # GOLDENDATA = "/mount/banques/prod/index/golden/"
     os.environ['GOLDENDATA'] = GOLDENDATA
 
-try:
-    TABLE = os.environ['TAXOBDBDATA']
-except:
-    TABLE = '/local/databases/rel/taxodb/current/bdb/'
-    TABLE = '/Users/maufrais/Developpements/TaxoDBNCBI/test/'
-
-try:
-    SILVA_TABLE = os.environ['SILVABDBDATA']
-except:
-    SILVA_TABLE = '/local/databases/rel/taxodb/current/bdb/'
-    SILVA_TABLE = '/Users/maufrais/Developpements/TaxoDB/data/'
-
-try:
-    GG_TABLE = os.environ['GGBDBDATA']
-except:
-    GG_TABLE = '/local/databases/rel/taxodb/current/bdb/'
-    GG_TABLE = '/Users/maufrais/Developpements/TaxoDB/data/'
-
-TAXODB_BDB = 'taxodb.bdb'
-NCBITAXODB_BDB = 'taxodb.bdb'
-GGTAXODB_BDB = 'greengenes_accVosoc.bdb'
-SILVATAXODB_BDB = 'silva_accVosoc.bdb'
 
 # ###################
 
@@ -360,6 +339,20 @@ if __name__ == '__main__':
                                  type=argparse.FileType('w'),
                                  help='Output file',
                                  default=sys.stdout)
+    general_options.add_argument("-b", "--bdb",
+                                 dest="bdbfile",
+                                 help="",
+                                 metavar="File",
+                                 required=True
+                                 )
+    general_options.add_argument("-t", "--bdb_type",
+                                 dest="bdbtype",
+                                 help="",
+                                 type='choice',
+                                 default='ncbi',
+                                 choices=['ncbi', 'gg', 'silva'],
+                                 required=True
+                                 )
     general_options.add_argument("-c", "--column",
                                  action='store',
                                  dest='column',
@@ -403,25 +396,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    from bsddb import db as bdb
-
     cnt_cards = 0
     l_lines = []
 
-    try:
-        TMP_PATH = os.environ['TMPPATH']
-    except:
-        TMP_PATH = "/tmp"
-
     # ===== Tabulated file parsing
+    NCBITAXODB_BDB = 'taxodb.bdb'
+    GGTAXODB_BDB = 'greengenes_accVosoc.bdb'
+    SILVATAXODB_BDB = 'silva_accVosoc.bdb'
 
     silva_first_pass = True  # open only once silva BDB
     gg_first_pass = True  # open only gg once BDB
     ncbi_osVSocBDB = bdb.DB()
 
-    ncbi_osVSocBDBfile = TABLE + NCBITAXODB_BDB
+    args.bdbfile = NCBITAXODB_BDB
     try:
-        ncbi_osVSocBDB.open(ncbi_osVSocBDBfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+        ncbi_osVSocBDB.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
     except StandardError, err:
         print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
         sys.exit()
