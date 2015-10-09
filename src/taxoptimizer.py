@@ -230,7 +230,7 @@ def doGoldenMulti(allTaxo, l_cards, DE, allTaxId, osVSoc_bdb):
             l_db_acc = db_acc.split(":")
             acc = l_db_acc[1]
             if acc not in allTaxo:
-                allTaxo[acc] = {'db': db}
+                allTaxo[acc] = {'db': l_db_acc[0]}
                 allTaxo[acc]['orgName'], allTaxo[acc]['taxId'], allTaxo[acc]['taxoLight'], allTaxo[acc]['DE'] = parse(flatFile, DE)  # orgName, taxId, taxoLight, description
                 allTaxo, allTaxId = extractTaxoFrom_osVSocBDB_multi(acc, allTaxo, allTaxId, osVSoc_bdb)
 
@@ -359,10 +359,9 @@ def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=N
         if not acc or not db:
             if not splitfile:
                 print >>outfh, line[:-1]
-            if args.notaxofh:
+            if notaxofh:
                 print >>notaxofh, line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[column - 1], lineNb))
-
+                print >>sys.stderr, TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" % (fld[column - 1], separator, lineNb))
             try:
                 line = tabfh.readline()
                 lineNb += 1
@@ -416,13 +415,12 @@ def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, d
             sys.exit()
 
         acc, db = column_analyser(fldcolumn, db)
-
         if not acc or not db:
             if not splitfile:
                 print >>outfh, line[:-1]
             if notaxofh:
                 print >>notaxofh, line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[column - 1], lineNb))
+            print >>sys.stderr, TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" % (fld[column - 1], separator, lineNb))
 
             try:
                 line = tabfh.readline()
@@ -447,15 +445,15 @@ def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, d
                 taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, accVosocBDB)
 
             if taxonomy:
-                print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
+                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
             else:
-                if args.notaxofh:
-                    print >>args.notaxofh, line[:-1]
-                if not args.splitFile:
-                    print >>args.outfh, line[:-1]
+                if notaxofh:
+                    print >>notaxofh, line[:-1]
+                if not splitfile:
+                    print >>outfh, line[:-1]
 
         try:
-            line = args.tabfh.readline()
+            line = tabfh.readline()
             lineNb += 1
         except EOFError, err:
             print >>sys.stderr, err
@@ -476,7 +474,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='taxoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description="Parse a blast output report and add NCBI Taxonomy database information in each HSP.")
+                                     description="Parse a blast output report and add NCBI, SILVA or Greengenes Taxonomy database information in each HSP.")
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
@@ -484,14 +482,14 @@ if __name__ == '__main__':
                                  help="Tabulated input file. (Recommended, Blast m8 file)",
                                  metavar="File",
                                  type=file,
-                                 default=sys.stdin)
+                                 required=True)
     general_options.add_argument("-o", "--out",
                                  action='store',
                                  dest='outfh',
                                  metavar="File",
                                  type=argparse.FileType('w'),
                                  help='Output file',
-                                 default=sys.stdout)
+                                 required=True)
     general_options.add_argument("-b", "--bdb",
                                  dest="bdbfile",
                                  help="",
@@ -501,7 +499,7 @@ if __name__ == '__main__':
     general_options.add_argument("-t", "--bdb_type",
                                  dest="bdbtype",
                                  help="",
-                                 type='choice',
+                                 type=str,
                                  default='ncbi',
                                  choices=['ncbi', 'gg', 'silva'],
                                  required=True
@@ -516,21 +514,15 @@ if __name__ == '__main__':
                                  dest="separator", metavar="str", type=str,
                                  help="Separator in database AC",
                                  default='|')
-    general_options.add_argument('-d', '--database', metavar='str',
-                                 dest='database',
-                                 type=str,
-                                 help="Database to use. Supposed that all HSPs match this database.",
-                                 default=None,
-                                 )
+
     general_options.add_argument("-e", "--description",
                                  dest="description",
-                                 help="Add database description (DE) in the output",
+                                 help="Add database description (DE) in the output.",
                                  action='store_true',
                                  default=False,)
-
     general_options.add_argument("-x", "--splitfile",
                                  dest="splitfile",
-                                 help="Only show lines with a taxonomy correspondance in the NCBI taxomomy database. Could be used with -m option.",
+                                 help="Only show lines with a taxonomy correspondance. Could be used with -m option.",
                                  action='store_true',
                                  default=False,)
     general_options.add_argument("-f", "--no_taxo_file",
@@ -538,14 +530,19 @@ if __name__ == '__main__':
                                  dest='notaxofh',
                                  metavar="File",
                                  type=argparse.FileType('w'),
-                                 help='Only show lines without a taxonomy correspondance in the NCBI taxomomy database. Could be used with -x option.',)
-
+                                 help='Only show lines without a taxonomy correspondance. Could be used with -x option.',)
+    general_options.add_argument('-d', '--database', metavar='str',
+                                 dest='database',
+                                 type=str,
+                                 help="Supposed that all blast HSPs match this database. Not used for Silva and Greengenes databases",
+                                 default=None,
+                                 )
     golden_options = parser.add_argument_group(title="Golden options", description=None)
     golden_options.add_argument("-m", "--max_cards",
                                 action='store',
                                 dest='max_cards',
                                 type=int,
-                                help='Maximum cards number use by Golden2.0 in analyses',
+                                help='Maximum cards number used by Golden2.0 in analyses',
                                 default=500)
 
     args = parser.parse_args()
