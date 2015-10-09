@@ -331,7 +331,7 @@ def column_analyser(fldcolumn, db):
     return acc, db
 
 
-def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=None, db=None, splitfile=False, description=False):
+def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
     try:
@@ -340,7 +340,6 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=No
     except EOFError, err:
         print >>sys.stderr, err
         sys.exit()
-    DE = ''
     l_cards = ""
     cnt_cards = 0
     l_lines = []
@@ -396,9 +395,8 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=No
         printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
 
 
-def main_gg_gle(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
+def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
-    allTaxId = {}
     try:
         line = tabfh.readline()
         lineNb = 1
@@ -406,7 +404,6 @@ def main_gg_gle(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, db=
         print >>sys.stderr, err
         sys.exit()
     DE = ''
-    l_cards = ""
     while line:
         fld = line.split()
         if line == '\n':
@@ -566,7 +563,7 @@ if __name__ == '__main__':
             print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
             sys.exit()
 
-        main_gle(args.tabfh, args.outfh, osVSoc_bdb, args.column, args.separator, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
+        main_ncbi(args.tabfh, args.outfh, osVSoc_bdb, args.column, args.separator, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
         osVSoc_bdb.close()
     elif args.bdbtype in ['gg', 'silva']:
         accVosocBDB = bdb.DB()
@@ -575,4 +572,4 @@ if __name__ == '__main__':
         except StandardError, err:
             print >>sys.stderr, TaxOptimizerError("Taxonomy Berkeley database open error, %s" % err)
             sys.exit()
-        main_gg_gle(args.tabfh, args.outfh, accVosocBDB, args.column, args.separator, args.notaxofh, args.database, args.splitfile, args.description)
+        main_gg_silva(args.tabfh, args.outfh, accVosocBDB, args.column, args.separator, args.notaxofh, args.database, args.splitfile, args.description)
