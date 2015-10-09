@@ -220,7 +220,7 @@ def buildQueryStr(txt_line, db, acc, l_cards, cnt_cards, l_lines):
 ##############################################################################
 
 
-def doGoldenMulti(allTaxo, l_cards, DE, allTaxId, ncbi_osVSocBDB):
+def doGoldenMulti(allTaxo, l_cards, DE, allTaxId, osVSoc_bdb):
     idx_res = 0
     lst_input = l_cards.split("\n")
     try:
@@ -232,7 +232,7 @@ def doGoldenMulti(allTaxo, l_cards, DE, allTaxId, ncbi_osVSocBDB):
             if acc not in allTaxo:
                 allTaxo[acc] = {'db': db}
                 allTaxo[acc]['orgName'], allTaxo[acc]['taxId'], allTaxo[acc]['taxoLight'], allTaxo[acc]['DE'] = parse(flatFile, DE)  # orgName, taxId, taxoLight, description
-                allTaxo, allTaxId = extractTaxoFrom_osVSocBDB_multi(acc, allTaxo, allTaxId, ncbi_osVSocBDB)
+                allTaxo, allTaxId = extractTaxoFrom_osVSocBDB_multi(acc, allTaxo, allTaxId, osVSoc_bdb)
 
             flatFile = Golden.access_new(l_cards)
             idx_res += 1
@@ -312,6 +312,229 @@ def extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, BDB):
     else:
         return '', allTaxo
 
+
+def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
+    allTaxo = {}
+    allTaxId = {}
+    try:
+        line = tabfh.readline()
+        lineNb = 1
+    except EOFError, err:
+        print >>sys.stderr, err
+        sys.exit()
+
+    l_cards = ""
+
+    while line:
+        fld = line.split()
+        if line == '\n':
+            line = tabfh.readline()
+            continue
+        try:
+            fldcolumn = fld[column - 1].split(separator)
+        except:
+            print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
+            sys.exit()
+
+        acc = ''
+        if len(fldcolumn) == 5:
+            if not db:
+                db = fldcolumn[2]
+            acc = fldcolumn[3].split('.')[0]
+        elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
+            if not db:
+                db = fldcolumn[0]
+            if len(fldcolumn) == 3 and fldcolumn[1] == '':
+                acc = fldcolumn[2].split('.')[0]
+            else:
+                acc = fldcolumn[1].split('.')[0]
+        elif len(fldcolumn) == 1 and db:
+            acc = fldcolumn[0]
+
+        if not acc or not db:
+            if not splitfile:
+                print >>outfh, line[:-1]
+            if args.notaxofh:
+                print >>notaxofh, line[:-1]
+            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[column - 1], lineNb))
+
+            try:
+                line = tabfh.readline()
+                lineNb += 1
+            except EOFError, err:
+                print >>sys.stderr, err
+                print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
+                sys.exit()
+            continue
+        elif db not in ['silva', 'gg']:
+            l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
+            if cnt_cards == args.max_cards:
+                allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
+                printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
+                l_cards = ""
+                l_lines = []
+                cnt_cards = 0
+        else:
+            taxonomy = ''
+            if acc in allTaxo:
+                if 'taxoFull' in allTaxo[acc]:
+                    taxonomy = allTaxo[acc]['taxoFull']
+                else:
+                    taxonomy = allTaxo[acc]['taxoLight']
+                description = allTaxo[acc]['DE']
+            else:
+                taxonomy = ''
+                allTaxo[acc] = {'db': db}
+
+            if taxonomy:
+                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
+            else:
+                if notaxofh:
+                    print >>notaxofh, line[:-1]
+                if not splitfile:
+                    print >>outfh, line[:-1]
+
+        try:
+            line = tabfh.readline()
+            lineNb += 1
+        except EOFError, err:
+            print >>sys.stderr, err
+            print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
+
+            sys.exit()
+        lineNb += 1
+
+    if cnt_cards != 0:
+        allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
+        printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
+
+def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
+    allTaxo = {}
+    allTaxId = {}
+    try:
+        line = tabfh.readline()
+        lineNb = 1
+    except EOFError, err:
+        print >>sys.stderr, err
+        sys.exit()
+
+    l_cards = ""
+    while line:
+        fld = line.split()
+        if line == '\n':
+            line = tabfh.readline()
+            continue
+        try:
+            fldcolumn = fld[column - 1].split(separator)
+        except:
+            print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
+            sys.exit()
+
+        acc = ''
+        acc = ''
+        if len(fldcolumn) == 5:
+            if not db:
+                db = fldcolumn[2]
+            acc = fldcolumn[3].split('.')[0]
+        elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
+            if not db:
+                db = fldcolumn[0]
+            if len(fldcolumn) == 3 and fldcolumn[1] == '':
+                acc = fldcolumn[2].split('.')[0]
+            else:
+                acc = fldcolumn[1].split('.')[0]
+        elif len(fldcolumn) == 1 and db:
+            acc = fldcolumn[0]
+
+        if not acc or not db:
+            if not args.splitfile:
+                print >>args.outfh, line[:-1]
+            if args.notaxofh:
+                print >>args.notaxofh, line[:-1]
+            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[args.column - 1], lineNb))
+
+            try:
+                line = args.tabfh.readline()
+                lineNb += 1
+            except EOFError, err:
+                print >>sys.stderr, err
+                print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
+                sys.exit()
+            continue
+        elif db not in ['silva', 'gg']:
+            l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
+            if cnt_cards == args.max_cards:
+                allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
+                printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
+                l_cards = ""
+                l_lines = []
+                cnt_cards = 0
+
+        else:  # special treatment for silva and gg
+            taxonomy = ''
+            if acc in allTaxo:
+                if 'taxoFull' in allTaxo[acc]:
+                    taxonomy = allTaxo[acc]['taxoFull']
+                else:
+                    taxonomy = allTaxo[acc]['taxoLight']
+                description = allTaxo[acc]['DE']
+            else:
+                taxonomy = ''
+                allTaxo[acc] = {'db': db}
+
+                if db == 'silva':
+                    if silva_first_pass:
+                        silva_first_pass = False
+                        silva_accVosocBDB = bdb.DB()
+                        silva_accVosocBDBfile = SILVA_TABLE + SILVATAXODB_BDB
+                        print >>sys.stderr, silva_accVosocBDBfile
+                        try:
+                            silva_accVosocBDB.open(silva_accVosocBDBfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+                        except StandardError, err:
+                            print >>sys.stderr, TaxOptimizerError("Silva Taxonomy Berkeley open error, %s" % err)
+                            sys.exit()
+                    taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, silva_accVosocBDB)
+                elif db == 'gg':
+                    if gg_first_pass:
+                        gg_first_pass = False
+                        gg_first_pass = False
+                        gg_accVosocBDB = bdb.DB()
+                        gg_accVosocBDBfile = GG_TABLE + GGTAXODB_BDB
+
+                        try:
+                            gg_accVosocBDB.open(gg_accVosocBDBfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+                        except StandardError, err:
+                            print >>sys.stderr, TaxOptimizerError("GreenGenes Taxonomy Berkeley database open error, %s" % err)
+                            sys.exit()
+                    taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, gg_accVosocBDB)
+
+            if taxonomy:
+                print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
+            else:
+                if args.notaxofh:
+                    print >>args.notaxofh, line[:-1]
+                if not args.splitFile:
+                    print >>args.outfh, line[:-1]
+
+        try:
+            line = args.tabfh.readline()
+            lineNb += 1
+        except EOFError, err:
+            print >>sys.stderr, err
+            print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
+
+            sys.exit()
+        lineNb += 1
+
+    if cnt_cards != 0:
+        allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
+        printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
+
+    args.tabfh.close()
+    osVSoc_bdb.close()
+
+
+
 ##############################################################################
 #
 #            MAIN
@@ -367,6 +590,7 @@ if __name__ == '__main__':
                                  dest='database',
                                  type=str,
                                  help="Database to use. Supposed that all HSPs match this database.",
+                                 default=None,
                                  )
     general_options.add_argument("-e", "--description",
                                  dest="description",
@@ -406,14 +630,17 @@ if __name__ == '__main__':
 
     silva_first_pass = True  # open only once silva BDB
     gg_first_pass = True  # open only gg once BDB
-    ncbi_osVSocBDB = bdb.DB()
 
-    args.bdbfile = NCBITAXODB_BDB
+    osVSoc_bdb = bdb.DB()
     try:
-        ncbi_osVSocBDB.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+        osVSoc_bdb.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
     except StandardError, err:
         print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
         sys.exit()
+
+    main_gle(args.tabfh, args.column, osVSoc_bdb, args.separator, args.outfh, args.notaxofh, args.database, args.splitfile, args.description)
+
+
 
     allTaxo = {}
     allTaxId = {}
@@ -479,7 +706,7 @@ if __name__ == '__main__':
         elif db not in ['silva', 'gg']:
             l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
             if cnt_cards == args.max_cards:
-                allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, ncbi_osVSocBDB)
+                allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
                 printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
                 l_cards = ""
                 l_lines = []
@@ -542,8 +769,8 @@ if __name__ == '__main__':
         lineNb += 1
 
     if cnt_cards != 0:
-        allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, ncbi_osVSocBDB)
+        allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
         printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
 
     args.tabfh.close()
-    ncbi_osVSocBDB.close()
+    osVSoc_bdb.close()
