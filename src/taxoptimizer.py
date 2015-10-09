@@ -313,6 +313,24 @@ def extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, BDB):
         return '', allTaxo
 
 
+def column_analyser(fldcolumn, db):
+    acc = ''
+    if len(fldcolumn) == 5:
+        if not db:
+            db = fldcolumn[2]
+        acc = fldcolumn[3].split('.')[0]
+    elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
+        if not db:
+            db = fldcolumn[0]
+        if len(fldcolumn) == 3 and fldcolumn[1] == '':
+            acc = fldcolumn[2].split('.')[0]
+        else:
+            acc = fldcolumn[1].split('.')[0]
+    elif len(fldcolumn) == 1 and db:
+        acc = fldcolumn[0]
+    return acc, db
+
+
 def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
@@ -322,7 +340,7 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None
     except EOFError, err:
         print >>sys.stderr, err
         sys.exit()
-
+    DE = ''
     l_cards = ""
 
     while line:
@@ -336,20 +354,7 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None
             print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
             sys.exit()
 
-        acc = ''
-        if len(fldcolumn) == 5:
-            if not db:
-                db = fldcolumn[2]
-            acc = fldcolumn[3].split('.')[0]
-        elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
-            if not db:
-                db = fldcolumn[0]
-            if len(fldcolumn) == 3 and fldcolumn[1] == '':
-                acc = fldcolumn[2].split('.')[0]
-            else:
-                acc = fldcolumn[1].split('.')[0]
-        elif len(fldcolumn) == 1 and db:
-            acc = fldcolumn[0]
+        acc, db = column_analyser(fldcolumn, db)
 
         if not acc or not db:
             if not splitfile:
@@ -381,13 +386,14 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None
                     taxonomy = allTaxo[acc]['taxoFull']
                 else:
                     taxonomy = allTaxo[acc]['taxoLight']
-                description = allTaxo[acc]['DE']
+                if description:
+                    DE = allTaxo[acc]['DE']
             else:
                 taxonomy = ''
                 allTaxo[acc] = {'db': db}
 
             if taxonomy:
-                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
+                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
             else:
                 if notaxofh:
                     print >>notaxofh, line[:-1]
@@ -408,7 +414,8 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None
         allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
         printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
 
-def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
+
+def main_gg_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
     try:
@@ -417,7 +424,7 @@ def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
     except EOFError, err:
         print >>sys.stderr, err
         sys.exit()
-
+    DE = ''
     l_cards = ""
     while line:
         fld = line.split()
@@ -430,27 +437,13 @@ def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
             print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
             sys.exit()
 
-        acc = ''
-        acc = ''
-        if len(fldcolumn) == 5:
-            if not db:
-                db = fldcolumn[2]
-            acc = fldcolumn[3].split('.')[0]
-        elif len(fldcolumn) == 2 or len(fldcolumn) == 3:
-            if not db:
-                db = fldcolumn[0]
-            if len(fldcolumn) == 3 and fldcolumn[1] == '':
-                acc = fldcolumn[2].split('.')[0]
-            else:
-                acc = fldcolumn[1].split('.')[0]
-        elif len(fldcolumn) == 1 and db:
-            acc = fldcolumn[0]
+        acc, db = column_analyser(fldcolumn, db)
 
         if not acc or not db:
-            if not args.splitfile:
-                print >>args.outfh, line[:-1]
-            if args.notaxofh:
-                print >>args.notaxofh, line[:-1]
+            if not splitfile:
+                print >>outfh, line[:-1]
+            if notaxofh:
+                print >>notaxofh, line[:-1]
             print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[args.column - 1], lineNb))
 
             try:
@@ -461,23 +454,15 @@ def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
                 print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
                 sys.exit()
             continue
-        elif db not in ['silva', 'gg']:
-            l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
-            if cnt_cards == args.max_cards:
-                allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
-                printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
-                l_cards = ""
-                l_lines = []
-                cnt_cards = 0
-
-        else:  # special treatment for silva and gg
+        else:
             taxonomy = ''
             if acc in allTaxo:
                 if 'taxoFull' in allTaxo[acc]:
                     taxonomy = allTaxo[acc]['taxoFull']
                 else:
                     taxonomy = allTaxo[acc]['taxoLight']
-                description = allTaxo[acc]['DE']
+                if description:
+                    DE = allTaxo[acc]['DE']
             else:
                 taxonomy = ''
                 allTaxo[acc] = {'db': db}
@@ -509,7 +494,7 @@ def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
                     taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, gg_accVosocBDB)
 
             if taxonomy:
-                print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, allTaxo[acc]['DE'])
+                print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
             else:
                 if args.notaxofh:
                     print >>args.notaxofh, line[:-1]
@@ -527,7 +512,7 @@ def main_gg_gle(tabfh, column, separator, db=None, splitfile=False):
         lineNb += 1
 
     if cnt_cards != 0:
-        allTaxo = doGoldenMulti(allTaxo, l_cards, args.description, allTaxId, osVSoc_bdb)
+        allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
         printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
 
     args.tabfh.close()
