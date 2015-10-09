@@ -342,7 +342,8 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=No
         sys.exit()
     DE = ''
     l_cards = ""
-
+    cnt_cards = 0
+    l_lines = []
     while line:
         fld = line.split()
         if line == '\n':
@@ -395,7 +396,7 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=No
         printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
 
 
-def main_gg_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
+def main_gg_gle(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
     try:
@@ -446,32 +447,7 @@ def main_gg_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=N
             else:
                 taxonomy = ''
                 allTaxo[acc] = {'db': db}
-
-                if db == 'silva':
-                    if silva_first_pass:
-                        silva_first_pass = False
-                        silva_accVosocBDB = bdb.DB()
-                        silva_accVosocBDBfile = SILVA_TABLE + SILVATAXODB_BDB
-                        print >>sys.stderr, silva_accVosocBDBfile
-                        try:
-                            silva_accVosocBDB.open(silva_accVosocBDBfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-                        except StandardError, err:
-                            print >>sys.stderr, TaxOptimizerError("Silva Taxonomy Berkeley open error, %s" % err)
-                            sys.exit()
-                    taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, silva_accVosocBDB)
-                elif db == 'gg':
-                    if gg_first_pass:
-                        gg_first_pass = False
-                        gg_first_pass = False
-                        gg_accVosocBDB = bdb.DB()
-                        gg_accVosocBDBfile = GG_TABLE + GGTAXODB_BDB
-
-                        try:
-                            gg_accVosocBDB.open(gg_accVosocBDBfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-                        except StandardError, err:
-                            print >>sys.stderr, TaxOptimizerError("GreenGenes Taxonomy Berkeley database open error, %s" % err)
-                            sys.exit()
-                    taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, gg_accVosocBDB)
+                taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, accVosocBDB)
 
             if taxonomy:
                 print >>args.outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
@@ -490,14 +466,6 @@ def main_gg_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=N
 
             sys.exit()
         lineNb += 1
-
-    if cnt_cards != 0:
-        allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
-        printResults(l_lines, allTaxo, args.outfh, args.notaxofh, args.splitfile)
-
-    args.tabfh.close()
-    osVSoc_bdb.close()
-
 
 
 ##############################################################################
@@ -585,25 +553,26 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    cnt_cards = 0
-    l_lines = []
-
     # ===== Tabulated file parsing
     NCBITAXODB_BDB = 'taxodb.bdb'
     GGTAXODB_BDB = 'greengenes_accVosoc.bdb'
     SILVATAXODB_BDB = 'silva_accVosoc.bdb'
 
-    silva_first_pass = True  # open only once silva BDB
-    gg_first_pass = True  # open only gg once BDB
+    if args.bdbtype == 'ncbi':
+        osVSoc_bdb = bdb.DB()
+        try:
+            osVSoc_bdb.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+        except StandardError, err:
+            print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
+            sys.exit()
 
-    osVSoc_bdb = bdb.DB()
-    try:
-        osVSoc_bdb.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-    except StandardError, err:
-        print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
-        sys.exit()
-
-    main_gle(args.tabfh, args.column, osVSoc_bdb, args.separator, args.outfh, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
-
-
-    osVSoc_bdb.close()
+        main_gle(args.tabfh, args.outfh, osVSoc_bdb, args.column, args.separator, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
+        osVSoc_bdb.close()
+    elif args.bdbtype in ['gg', 'silva']:
+        accVosocBDB = bdb.DB()
+        try:
+            accVosocBDB.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
+        except StandardError, err:
+            print >>sys.stderr, TaxOptimizerError("Taxonomy Berkeley database open error, %s" % err)
+            sys.exit()
+        main_gg_gle(args.tabfh, args.outfh, accVosocBDB, args.column, args.separator, args.notaxofh, args.database, args.splitfile, args.description)
