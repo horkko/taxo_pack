@@ -8,14 +8,6 @@
 
 import os
 import sys
-# try:
-#     LIB = os.environ['RANKOPTIMIZERLIB']
-# except:
-#     LIB = '/usr/local/bin'
-#     LIB = '../lib'
-# 
-# if LIB not in sys.path:
-#     sys.path.append(LIB)
 
 
 class Taxon(object):

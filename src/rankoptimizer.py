@@ -12,26 +12,6 @@ import sys
 import argparse
 
 
-# try:
-#     SHARE = os.environ['RANKOPTIMIZERSHARE']
-# except:
-#     SHARE = '/Users/maufrais/Developpements2/taxo_pack/lib/KronaTools-2.1/src'
-# 
-# if SHARE not in sys.path:
-#     sys.path.append(SHARE)
-# 
-# global krona_js
-# krona_js = SHARE + '/krona-2.0.gensoft.js'
-# 
-# try:
-#     LIB = os.environ['RANKOPTIMIZERLIB']
-# except:
-#     LIB = '/usr/local/bin'
-#     LIB = '/Users/maufrais/Developpements2/taxo_pack/lib'
-# 
-# if LIB not in sys.path:
-#     sys.path.append(LIB)
-
 import rankoptimizerlib
 
 
@@ -303,33 +283,26 @@ def lca(tree):
 ##############################################################################
 
 
-def usage():
-    print """
-    rankoptimizer use Krona an interactive metagenomic visualization tool in a Web browser. (https://github.com/marbl/Krona)
-    Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
-
-"""
 
 if __name__ == '__main__':
     # ===== Command line parser
     usage = "rankoptimizer [options] -i <FILE>"
     epilog = """
-    rankoptimizer analyze the taxonomy abundance of a blast output pre-process by the taxoptimizer program.
-    The taxonomic abundance contains in the blast output could be show by Krona 2.1 an interactive metagenomic visualization in a Web browser.
 
     Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (http://sourceforge.net/p/krona/home/krona/):
     Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
 """
     parser = argparse.ArgumentParser(prog='rankoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog,
-                                     description="Statistical analyses of the NCBI Taxonomy informations contained in a taxoptimizer file.\
-                                     Output file could be visualized by Krona interactive metagenomic visualization in a \
-                                     Web browser.")
+                                     description="""rankoptimizer analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer
+program, and format result with Krona, an interactive metagenomic visualization in a Web browser.
+By default, only the best HSP of each sequence is reported.""")
+
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
     general_options.add_argument("-i", "--in", dest="tabfh",
-                                 help="Tabulated input file. Blast report with NCBI Taxonomy database informations from taxoptimizer programm.",
+                                 help="Tabulated input file. Blast report with additional NCBI Taxonomy database informations from taxoptimizer programm.",
                                  type=file,
                                  metavar="File",
                                  required=True)

@@ -344,12 +344,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='taxoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description="Add NCBI Taxonomy database information in a blast output report (m8 format).")
+                                     description="Parse a blast output report and add NCBI Taxonomy database information in each HSP.")
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
     general_options.add_argument("-i", "--in", dest="tabfh",
-                                 help="Tabulated input file. (Example, Blast m8 file)",
+                                 help="Tabulated input file. (Recommended, Blast m8 file)",
                                  metavar="File",
                                  type=file,
                                  default=sys.stdin)

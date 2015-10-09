@@ -30,11 +30,8 @@ if __name__ == '__main__':
 
     usage = "kronaextract [options] -i <FILE>  -n <STRING>"
     epilog = """
-    kronaextract extract list of reads and blast offset for a given taxonomic name, from a xml file obtained by the rankoptimizer program.
+    kronaextract extract sub-list of Query ID from a set of sequences matching a given taxon name and/or their offset number in the blast report
 The output file could be split into two files: the 'prefix.seq' file contains reads names and the 'prefix.offset' file contains the corresponding taxoptimizer's line offset.
-
-kronaextract use Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (http://sourceforge.net/p/krona/home/krona/):
-    Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
 """
     parser = argparse.ArgumentParser(prog='kronaextract.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog)
