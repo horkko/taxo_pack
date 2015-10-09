@@ -14,19 +14,37 @@ import sys
 import argparse
 from bsddb import db as bdb
 
-import Golden
+class GoldenError:
+    def __init__(self, err):
+        self.err = err
+
+    def __repr__(self):
+        return "[GoldenError] " + self.err
+
+try:
+    import Golden
+except ImportError, err:
+    print >>sys.stderr, GoldenError("%s\n Install the mandatory program golden (https://github.com/C3BI-pasteur-fr/golden)" % err)
+    sys.exit(1)
 
 try:
     GOLDENDATA = os.environ['GOLDENDATA']
 except:
-    GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
-    # GOLDENDATA = "/mount/banques/prod/index/golden/"
-    os.environ['GOLDENDATA'] = GOLDENDATA
-
+#    # GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
+#    # GOLDENDATA = "/mount/banques/prod/index/golden/"
+    print >>sys.stderr, GoldenError('Set the mandatory GOLDENDATA environment variable. Consult https://github.com/C3BI-pasteur-fr/golden.')
+    sys.exit(1)
 
 # ###################
 
 
+class TaxOptimizerError:
+    def __init__(self, err):
+        self.err = err
+
+    def __repr__(self):
+        return "[taxoptimizer] " + self.err
+    
 class ParserError:
     def __init__(self, err):
         self.err = err
@@ -129,13 +147,6 @@ def parse(flatFile, DE):
         return parseGenbank(flatFile, DE)
     return '', '', '', ''
 
-
-class TaxOptimizerError:
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[taxoptimizer] " + self.err
 
 ##############################################################################
 #
