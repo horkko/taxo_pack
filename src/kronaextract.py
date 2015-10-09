@@ -1,8 +1,10 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Corinne Maufrais
 # Institut Pasteur, Centre d'informatique pour les biologistes
-# maufrais@pasteur.fr
+# corinne.maufrais@pasteur.fr
+#
 #
 
 # version 2.0

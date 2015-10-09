@@ -53,7 +53,7 @@ class check_and_build(build):
 
 
 require_pyt = ['python (>=2.7, <3.0)']
-require_mod = ['Golden', 'bsddb']
+require_mod = ['Golden', 'bsddb3']
 
 
 setup(name="taxo_pack",
@@ -67,7 +67,7 @@ Taxoptimizer parse the blast output report and add the NCBI Taxonomy database in
 Rankoptimizer analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer program, and format result with Krona,
 an interactive metagenomic visualization in a Web browser.
 kronaextract extract sub-list of Query ID from a set of sequences matching a given taxon name and/or their offset number in the blast report """),
-      scripts=['src/taxoptimizer', 'src/taxoptimizer', 'src/kronaextract'],
+      # scripts=['src/taxoptimizer', 'src/taxoptimizer', 'src/kronaextract'],
       cmdclass={'install_egg_info': nohup_egg_info},
       package_dir={'': 'src'},
       install_requires=['golden >= 3.0',

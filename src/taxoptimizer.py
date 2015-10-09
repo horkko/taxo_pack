@@ -33,7 +33,7 @@ except:
 #    # GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
 #    # GOLDENDATA = "/mount/banques/prod/index/golden/"
     print >>sys.stderr, GoldenError('Set the mandatory GOLDENDATA environment variable. Consult https://github.com/C3BI-pasteur-fr/golden.')
-    sys.exit(1)
+    #sys.exit(1)
 
 # ###################
 
