@@ -51,8 +51,9 @@ class check_and_build(build):
             pass
         return True
 
+
 require_pyt = ['python (>=2.7, <3.0)']
-require_mod = []
+require_mod = ['Golden', 'bsddb']
 
 
 setup(name="taxo_pack",
