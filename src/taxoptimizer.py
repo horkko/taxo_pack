@@ -331,7 +331,7 @@ def column_analyser(fldcolumn, db):
     return acc, db
 
 
-def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
+def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
     try:
@@ -373,32 +373,12 @@ def main_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=None
             continue
         elif db not in ['silva', 'gg']:
             l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
-            if cnt_cards == args.max_cards:
+            if cnt_cards == max_cards:
                 allTaxo = doGoldenMulti(allTaxo, l_cards, description, allTaxId, osVSoc_bdb)
                 printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
                 l_cards = ""
                 l_lines = []
                 cnt_cards = 0
-        else:
-            taxonomy = ''
-            if acc in allTaxo:
-                if 'taxoFull' in allTaxo[acc]:
-                    taxonomy = allTaxo[acc]['taxoFull']
-                else:
-                    taxonomy = allTaxo[acc]['taxoLight']
-                if description:
-                    DE = allTaxo[acc]['DE']
-            else:
-                taxonomy = ''
-                allTaxo[acc] = {'db': db}
-
-            if taxonomy:
-                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
-            else:
-                if notaxofh:
-                    print >>notaxofh, line[:-1]
-                if not splitfile:
-                    print >>outfh, line[:-1]
 
         try:
             line = tabfh.readline()
@@ -444,13 +424,13 @@ def main_gg_gle(tabfh, outfh, osVSoc_bdb, column, separator, notaxofh=None, db=N
                 print >>outfh, line[:-1]
             if notaxofh:
                 print >>notaxofh, line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[args.column - 1], lineNb))
+            print >>sys.stderr, TaxOptimizerError("Parsing: acc or db error: %s in line %s" % (fld[column - 1], lineNb))
 
             try:
-                line = args.tabfh.readline()
+                line = tabfh.readline()
                 lineNb += 1
             except EOFError, err:
-                print >>sys.stderr, err
+                # print >>sys.stderr, err
                 print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
                 sys.exit()
             continue
@@ -623,7 +603,7 @@ if __name__ == '__main__':
         print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
         sys.exit()
 
-    main_gle(args.tabfh, args.column, osVSoc_bdb, args.separator, args.outfh, args.notaxofh, args.database, args.splitfile, args.description)
+    main_gle(args.tabfh, args.column, osVSoc_bdb, args.separator, args.outfh, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
 
 
     osVSoc_bdb.close()
