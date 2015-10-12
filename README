@@ -1,0 +1,26 @@
+All programs permit to analyze and visualize the taxonomic abundance of set of sequences compared against a sequence database with BLAST.
+
+First, taxoptimizer.py parse the blast output report and add the NCBI Taxonomy database information to each HSP. It requires the bsddb python library
+(https://docs.python.org/2/library/bsddb.html), the Berkeley DB library (http://www.oracle.com/database/berkeley-db) and the Golden program
+(https://github.com/C3BI-pasteur-fr/golden) to work.
+
+And, rankoptimizer.py analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer.py program, and format result with Krona,
+an interactive metagenomic visualization in a Web browser (https://github.com/marbl/Krona). 
+
+Finaly, kronaextract.py extract sub-list of Query ID from a set of sequences matching a given taxon name and/or their offset number in the rankoptimizer.py output.
+
+ 
+USAGE:
+-------
+Get help:
+
+
+ $ python ./taxoptimizer.py -h
+ $ python ./rankoptimizer.py -h
+ $ python ./kronaextract.py -h
+
+Pipeline example:
+
+
+
+
