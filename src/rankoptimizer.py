@@ -290,7 +290,7 @@ if __name__ == '__main__':
     usage = "rankoptimizer [options] -i <FILE>"
     epilog = """
 
-    Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (http://sourceforge.net/p/krona/home/krona/):
+    Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (https://github.com/marbl/Krona/):
     Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
 """
     parser = argparse.ArgumentParser(prog='rankoptimizer.py',
@@ -303,7 +303,7 @@ By default, only the best HSP of each sequence is reported.""")
     general_options = parser.add_argument_group(title="Options", description=None)
 
     general_options.add_argument("-i", "--in", dest="tabfh",
-                                 help="Tabulated input file. Blast report with additional NCBI Taxonomy database informations from taxoptimizer programm.",
+                                 help="Tabulated input file. Blast report with additional NCBI Taxonomy database informations from taxoptimizer program.",
                                  type=file,
                                  metavar="File",
                                  required=True)
