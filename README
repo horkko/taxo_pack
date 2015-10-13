@@ -9,18 +9,43 @@ an interactive metagenomic visualization in a Web browser (https://github.com/ma
 
 Finaly, kronaextract.py extract sub-list of Query ID from a set of sequences matching a given taxon name and/or their offset number in the rankoptimizer.py output.
 
+INSTALL:
+ $ tar xfvz taxo_pack-2.0.tar.gz
+ $ cd taxo_pack-2.0
+ $ python setut.py install 
  
-USAGE:
--------
+Downloading and Installing prerequisites:
+----------------------------------------
+ 
+ 1) Install https://github.com/C3BI-pasteur-fr/golden
+ 2) Install https://github.com/C3BI-pasteur-fr/taxodb_ncbi and/or https://github.com/C3BI-pasteur-fr/taxo_rrna
+ 3) Install https://docs.python.org/2/library/bsddb.html 
+ 4) Install http://www.oracle.com/database/berkeley-db
+
+DATA PREPRATION:
+---------------
+Creation of database indexes with goldin (https://github.com/C3BI-pasteur-fr/golden)
+ $ cd my_working_directory
+ $ mkdir uniprot
+ $ cp ~/taxo_pack-2.0/test/part_of_uniprot.db uniprot
+ $ goldin uniprot uniprot/part_of_uniprot.db
+ $ export GOLDENDATA='/user_path/my_working_directory'
+
+Creation of the NCBI Taxonomy Database in Berkeley DB library (https://github.com/C3BI-pasteur-fr/taxodb_ncbi)
+ $ taxodb.py -n names.dmp -d nodes.dmp -b ncbi_taxodb.bdb 
+
+ # A compress ncbi_taxodb.bdb file is in taxo_pack-2.0/test repository 
+
+USAGE
+-----
 Get help:
 
+ $ python taxoptimizer.py -h
+ $ python rankoptimizer.py -h
+ $ python kronaextract.py -h
 
- $ python ./taxoptimizer.py -h
- $ python ./rankoptimizer.py -h
- $ python ./kronaextract.py -h
-
-Pipeline example:
-
-
+ $ taxoptimizer.py -i ~/taxo_pack-2.0/test/sequence_test.blast.m8 -o sequence_test.taxo -b ~/taxo_pack-2.0/test/ncbi_taxodb.bdb -t ncbi
+ $ rankoptimizer.py -i ~/Developpements/TaxOptimizer/distrib/taxoptimizer-2/test/sequence_test.tr.bl8.taxo -k R_k.xml -t R_t.txt -v R_v.html -V R_Vj.html -j R_j.json -p R_p.dmp -a -s /Users/maufrais/Developpements2/taxo_pack/lib/KronaTools-2.6/src/krona-2.0.js
+ $ kronaextract.py -i R_k.xml -n 'Retroviridae'  -o Retroviridae.out -s Retroviridae
 
 
