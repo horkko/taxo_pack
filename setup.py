@@ -67,11 +67,7 @@ Taxoptimizer parse the blast output report and add the NCBI Taxonomy database in
 Rankoptimizer analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer program, and format result with Krona,
 an interactive metagenomic visualization in a Web browser.
 kronaextract extract sub-list of Query ID from a set of sequences matching a given taxon name and/or their offset number in the blast report """),
-      # scripts=['src/taxoptimizer', 'src/taxoptimizer', 'src/kronaextract'],
+      scripts=['src/taxoptimizer.py', 'src/rankoptimizer.py', 'src/kronaextract.py', 'src/rankoptimizerlib.py'],
       cmdclass={'install_egg_info': nohup_egg_info},
       package_dir={'': 'src'},
-      install_requires=['golden >= 3.0',
-                        'bsddb3 >=6.1.0',
-                        'KronaTools >= 2.6',
-                        ],
       )
