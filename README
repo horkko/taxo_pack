@@ -46,7 +46,8 @@ Get help:
  $ python kronaextract.py -h
 
  $ taxoptimizer.py -i ~/taxo_pack-2.0/test/sequence_test.blast.m8 -o sequence_test.taxo -b ~/taxo_pack-2.0/test/ncbi_taxodb.bdb -t ncbi
- $ rankoptimizer.py -i ~/Developpements/TaxOptimizer/distrib/taxoptimizer-2/test/sequence_test.tr.bl8.taxo -k R_k.xml -t R_t.txt -v R_v.html -V R_Vj.html -j R_j.json -p R_p.dmp -a -s /Users/maufrais/Developpements2/taxo_pack/lib/KronaTools-2.6/src/krona-2.0.js
+ $ wget https://github.com/marbl/Krona/blob/master/KronaTools/src/krona-2.0.js
+ $ rankoptimizer.py -i ~/taxo_pack-2.0/test/sequence_test.tr.bl8.taxo -k R_k.xml -t R_t.txt -v R_v.html -V R_Vj.html -j R_j.json -p R_p.dmp -a -s krona-2.0.js
  $ kronaextract.py -i R_k.xml -n 'Retroviridae'  -o Retroviridae.out -s Retroviridae
 
 
