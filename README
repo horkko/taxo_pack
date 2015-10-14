@@ -27,7 +27,8 @@ DATA PREPRATION:
 Creation of database indexes with goldin (https://github.com/C3BI-pasteur-fr/golden)
  $ cd my_working_directory
  $ mkdir uniprot
- $ cp ~/taxo_pack-2.0/test/part_of_uniprot.db uniprot
+ $ tar xfvz ~/taxo_pack-2.0/test/part_of_uniprot.db.tar.gz
+ $ mv part_of_uniprot.db uniprot
  $ goldin uniprot uniprot/part_of_uniprot.db
  $ export GOLDENDATA='/user_path/my_working_directory'
 
