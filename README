@@ -1,8 +1,9 @@
 All programs permit to analyze and visualize the taxonomic abundance of set of sequences compared against a sequence database with BLAST.
 
-First, taxoptimizer.py parse the blast output report and add the NCBI Taxonomy database information to each HSP. It requires the bsddb python library
-(https://docs.python.org/2/library/bsddb.html), the Berkeley DB library (http://www.oracle.com/database/berkeley-db) and the Golden program
-(https://github.com/C3BI-pasteur-fr/golden) to work.
+First, taxoptimizer.py parse the blast output report and add the NCBI Taxonomy database information to each HSP. It requires the bsddb3 python library
+(https://pypi.python.org/pypi/bsddb3/), the Berkeley DB library (http://www.oracle.com),  the Golden program
+(https://github.com/C3BI-pasteur-fr/golden) and the taxodb_ncbi (https://github.com/C3BI-pasteur-fr/taxodb_ncbi) or/and the taxo_rrna 
+(https://github.com/C3BI-pasteur-fr/taxo_rrna) program to work. 
 
 And, rankoptimizer.py analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer.py program, and format result with Krona,
 an interactive metagenomic visualization in a Web browser (https://github.com/marbl/Krona). 
@@ -19,8 +20,8 @@ Downloading and Installing prerequisites:
  
  1) Install https://github.com/C3BI-pasteur-fr/golden
  2) Install https://github.com/C3BI-pasteur-fr/taxodb_ncbi and/or https://github.com/C3BI-pasteur-fr/taxo_rrna
- 3) Install https://docs.python.org/2/library/bsddb.html 
- 4) Install http://www.oracle.com/database/berkeley-db
+ 3) Install Berkeley DB library from http://www.oracle.com
+ 4) Install https://pypi.python.org/pypi/bsddb3 
 
 DATA PREPRATION:
 ---------------

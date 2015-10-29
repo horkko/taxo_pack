@@ -12,7 +12,7 @@
 import os
 import sys
 import argparse
-from bsddb import db as bdb
+from bsddb3 import db as bdb
 
 class GoldenError:
     def __init__(self, err):
