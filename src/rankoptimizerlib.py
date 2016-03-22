@@ -1,10 +1,12 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 
 # Corinne Maufrais
-# Institut Pasteur, DSI/CIB
-# maufrais@pasteur.fr
+# Institut Pasteur, Centre d'informatique pour les biologistes
+# corinne.maufrais@pasteur.fr
 #
-
+# version 2.1
 
 import os
 import sys

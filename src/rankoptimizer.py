@@ -6,7 +6,7 @@
 # corinne.maufrais@pasteur.fr
 #
 
-# version 2.0
+# version 2.1
 
 import os
 import sys
