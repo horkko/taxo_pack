@@ -8,11 +8,9 @@
 
 # version 2.1
 
-import os
+from __future__ import print_function
 import sys
 import argparse
-
-
 import rankoptimizerlib
 
 
@@ -283,49 +281,56 @@ def lca(tree):
 #
 ##############################################################################
 
-
-
 if __name__ == '__main__':
     # ===== Command line parser
     usage = "rankoptimizer [options] -i <FILE>"
-    epilog = """
-
+    epilog ="""
     Krona 2.1, an interactive metagenomic visualization tool in a Web browser.  (https://github.com/marbl/Krona/):
-    Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser. BMC Bioinformatics. 2011 Sep 30; 12(1):385.
-"""
+    Ondov BD, Bergman NH, and Phillippy AM. Interactive metagenomic visualization in a Web browser.
+    BMC Bioinformatics. 2011 Sep 30; 12(1):385.
+    """
     parser = argparse.ArgumentParser(prog='rankoptimizer.py',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter, usage=usage, epilog=epilog,
-                                     description="""rankoptimizer analyze the taxonomy abundance of a set of sequences, pre-process by the taxoptimizer
-program, and format result with Krona, an interactive metagenomic visualization in a Web browser.
-By default, only the best HSP of each sequence is reported.""")
-
+                                     description="""
+                                     rankoptimizer analyzes the taxonomy abundance of a set of sequences, pre-processed
+                                     by taxoptimizer program and format result with Krona, an interactive metagenomic
+                                     visualization in a Web browser.
+                                     By default, only the best HSP of each sequence is reported.
+                                     """)
 
     general_options = parser.add_argument_group(title="Options", description=None)
 
-    general_options.add_argument("-i", "--in", dest="tabfh",
-                                 help="Tabulated input file. Blast report with additional NCBI Taxonomy database informations from taxoptimizer program.",
+    general_options.add_argument("-i", "--in",
+                                 dest="tabfh",
+                                 help="""
+                                 Tabulated input file. Blast report with additional NCBI Taxonomy database informations
+                                 from taxoptimizer program.
+                                 """,
                                  type=file,
                                  metavar="File",
                                  required=True)
 
-    general_options.add_argument('-s', '--krona_js',
-                                 dest='krona_jsfh',
-                                 help="Krona javascript library. Official distribution: https://github.com/marbl/Krona/blob/master/KronaTools/src/krona-2.0.js",
+    general_options.add_argument("-s", "--krona_js",
+                                 dest="krona_jsfh",
+                                 help="""
+                                 Krona javascript library. Official distribution:
+                                 https://github.com/marbl/Krona/blob/master/KronaTools/src/krona-2.0.js
+                                 """,
                                  type=file,
                                  metavar="File",
                                  required=True)
 
     general_options.add_argument("-c", "--taxcolumn",
-                                 action='store',
-                                 dest='taxcolumn',
+                                 action="store",
+                                 dest="taxcolumn",
                                  type=int,
-                                 help='First column with NCBI Taxonomy informations.',
+                                 help="First column with NCBI Taxonomy informations.",
                                  default=14)
     general_options.add_argument("-C", "--scorecolumn",
-                                 action='store',
-                                 dest='scorecolumn',
+                                 action="store",
+                                 dest="scorecolumn",
                                  type=int,
-                                 help='Column\'s number with HSP scores',
+                                 help="Column's number with HSP scores",
                                  default=12)
 
     output_options = parser.add_argument_group(title="Output options", description=None)
@@ -455,8 +460,6 @@ By default, only the best HSP of each sequence is reported.""")
                     query_infos[query]['delta'].append((hsp_score, sbjct_taxonomy, pos_line))
                 else:
                     query_infos[query]['delta'] = [(hsp_score, sbjct_taxonomy, pos_line)]
-            # else:
-            #    print ''
         else:
             query_infos[query] = {'max_score': (hsp_score, sbjct_taxonomy, pos_line)}
 
@@ -573,4 +576,4 @@ By default, only the best HSP of each sequence is reported.""")
         args.dumpfh.close()
 
     if args.lca:
-        print 'Lowest common ancestor:', lca(taxo_tree)
+        print('Lowest common ancestor:%s' % lca(taxo_tree))
