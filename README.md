@@ -79,7 +79,7 @@ $ export GOLDENDATA='/path/to/golden_indexes'
 ```
 Command line example:
 ```
-$ taxoptimizer.py -i ~/taxo_pack-2.0/test/sequence_test.blast.m8 -o sequence_test.taxo -b ~/taxo_pack-2.0/test/ncbi_taxodb.bdb -t ncbi
+$ taxoptimizer.py -i ~/taxo_pack-<version>/test/sequence_test.blast.m8 -o sequence_test.taxo -b ~/taxo_pack-<version>/test/<dbname>.bdb -t ncbi
 ```
 
 2. `rankoptimizer.py`
@@ -151,7 +151,7 @@ Interactive metagenomic visualization in a Web browser. BMC Bioinformatics.
 Command line example:
 ```
 $ wget https://github.com/marbl/Krona/blob/master/KronaTools/src/krona-2.0.js
-$ rankoptimizer.py -i ~/taxo_pack-2.0/test/sequence_test.tr.bl8.taxo -k R_k.xml -t R_t.txt -v R_v.html -V R_Vj.html -j R_j.json -p R_p.dmp -a -s krona-2.0.js
+$ rankoptimizer.py -i ~/taxo_pack-<version>/test/sequence_test.tr.bl8.taxo -k R_k.xml -t R_t.txt -v R_v.html -V R_Vj.html -j R_j.json -p R_p.dmp -a -s krona-2.0.js
 ```
 3. `kronaextract.py`
 ```
