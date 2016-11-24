@@ -4,62 +4,28 @@
 # Corinne Maufrais
 # Institut Pasteur, Centre d'informatique pour les biologistes
 # corinne.maufrais@pasteur.fr
-#
-
+# Updated by Emmanuel Quevillon, tuco@pasteur.fr
 # version 2.1
-
-
+from __future__ import print_function
 import os
 import sys
 import argparse
 from bsddb3 import db as bdb
-
-class GoldenError:
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[GoldenError] " + self.err
-
+from taxodb.errors import GoldenError, TaxOptimizerError, ParserError, ParserWarning
 try:
     import Golden
-except ImportError, err:
-    print >>sys.stderr, GoldenError("%s\n Install the mandatory program golden (https://github.com/C3BI-pasteur-fr/golden)" % err)
+except ImportError as err:
+    print(GoldenError("%s\n Install the mandatory program golden (https://github.com/C3BI-pasteur-fr/golden)" %
+                      str(err)), file=sys.stderr)
     sys.exit(1)
 
 try:
     GOLDENDATA = os.environ['GOLDENDATA']
-except:
-#    # GOLDENDATA = "/local/gensoft2/exe/golden/1.1a/share/golden/db/"
-#    # GOLDENDATA = "/mount/banques/prod/index/golden/"
-    print >>sys.stderr, GoldenError('Set the mandatory GOLDENDATA environment variable. Consult https://github.com/C3BI-pasteur-fr/golden.')
+except KeyError as err:
+    print(GoldenError('Set the mandatory GOLDENDATA environment variable.\n'
+                      'Consult https://github.com/C3BI-pasteur-fr/golden.' % str(err),
+                      file=sys.stderr))
     sys.exit(1)
-
-# ###################
-
-
-class TaxOptimizerError:
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[taxoptimizer] " + self.err
-    
-class ParserError:
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[ParserError] " + self.err
-
-
-class ParserWarning:
-    def __init__(self, err):
-        self.err = err
-
-    def __repr__(self):
-        return "[ParserWarning] " + self.err
-
 
 class InputLine:
     # vlegrand@pasteur.fr development
@@ -69,25 +35,33 @@ class InputLine:
         self.skip_db = skip_db
 
 
-def parseUniprot(flatFile, DE):
+def parseUniprot(input=None, desc=None):
     """
-    parse uniprot or embl like flat file
+    Parses a UniProt or EMBL like flat file
+
+    :param input: Input file to parse
+    :type input: str
+    :param desc: Description tag value
+    type desc: str
+    :return: orgName, taxId, taxoLight, description
+    :rtype: str, str, str, str
     """
+    if not input:
+        print(ParserError("No UniProt/EMBL file given"), file=sys.stderr)
+        sys.exit(1)
     description = ''
     taxId = ''
     taxoLight = ''
     orgName = ''
-    lineFld = flatFile.split('\n')
-    vuOS = False
-    vuOC = False
-    vuOCXX = False
+    lineFld = input.split('\n')
+    vuOS = vuOC = vuOCXX = False
     for line in lineFld:
         if line == '\n':
             continue
         tag = line[0:2].strip()
         value = line[5:]
         value = value.replace('\n', '')
-        if DE and tag == 'DE':
+        if desc and tag == desc:
             description += value
         elif tag == 'OS' and not vuOS:
             fldOS = value.split('(')
@@ -105,23 +79,33 @@ def parseUniprot(flatFile, DE):
     return orgName, taxId, taxoLight, description
 
 
-def parseGenbank(flatFile, DE):
+def parseGenbank(input=None, desc=None):
     """
-    parse genbank like flat file
+    Parses GenBank like flat file
+
+    :param input: GenBank input file
+    :type input: str
+    :param desc: Description tag value
+    :type desc: str
+    :return: orgName, taxId, taxoLight, description
+    :rtype: str, str, str, str
     """
+    if not input:
+        print(ParserError("No GenBank file given"), file=sys.stderr)
+        sys.exit(1)
     description = ''
     taxId = ''
     taxoLight = ''
     orgName = ''
     taxoL = False
-    lineFld = flatFile.split('\n')
+    lineFld = input.split('\n')
     for line in lineFld:
         if line == '\n':
             continue
         tag = line[0:12].strip()
         value = line[12:]
         value = value.replace('\n', '')
-        if DE and tag == 'DEFINITION':
+        if desc and tag == 'DEFINITION':
             description += value
         elif tag == 'ORGANISM':  # one line ##### pb qqfois plusieurs ligne
             orgName += value.strip()
@@ -137,16 +121,25 @@ def parseGenbank(flatFile, DE):
     return orgName, taxId, taxoLight, description
 
 
-def parse(flatFile, DE):
+def parse(input=None, desc=None):
     """
-    parse db flat file (uniprot, embl, genbank) into a DBRecord object
-    """
-    if flatFile[:2] == 'ID':
-        return parseUniprot(flatFile, DE)
-    elif flatFile[:5] == 'LOCUS':
-        return parseGenbank(flatFile, DE)
-    return '', '', '', ''
+    Parses db flat file (UniProt, EMBL, GenBank) into a DBRecord object
 
+    :param input: Input file
+    :type input: str
+    :param desc: Description tag value
+    :type desc: str
+    :return: orgName, taxId, taxoLight, description
+    :rtype: str, str, str, str
+    """
+    if not input:
+        print(ParserError("No input file gven"))
+        sys.exit(1)
+    if input[:2] == 'ID':
+        return parseUniprot(input=input, desc=desc)
+    elif input[:5] == 'LOCUS':
+        return parseGenbank(input=input, desc=desc)
+    return '', '', '', ''
 
 ##############################################################################
 #
@@ -155,9 +148,27 @@ def parse(flatFile, DE):
 ##############################################################################
 
 
-def doGolden(db, ac, DE):
+def doGolden(db=None, acc=None, desc=None):
+    """
+    Performs a golden search
+
+    :param db: Database to search
+    :type db: str
+    :param acc: Accession/ID to search in database
+    :type acc: str
+    :param desc: Description type
+    :type desc: str
+    :return:
+    """
     # ########################## db ref
-    if db in['sp', 'sw', 'swissprot', 'tr', 'trembl']:
+    if not db:
+        print(GoldenError("No database to search given"))
+        sys.exit(1)
+    if not acc:
+        print(GoldenError("No Acc/ID to search given"))
+        sys.exit(1)
+
+    if db in ['sp', 'sw', 'swissprot', 'tr', 'trembl']:
         db = 'uniprot'
     elif db in ['emb', 'dbj']:
         db = 'embl'
@@ -176,17 +187,16 @@ def doGolden(db, ac, DE):
     elif db in ['pir', 'pdb', 'tpg', 'tpe', 'tpd', 'prf']:
         return '', '', '', ''
     try:
-        flatFile = Golden.access(db, ac)
-    except IOError, err:
-        print >>sys.stderr, err, db, ac
-        sys.exit()
+        flatFile = Golden.access(db, acc)
+    except IOError as err:
+        print("%s, %s, %s" % (str(err), db, acc), file=sys.stderr)
+        sys.exit(1)
     if flatFile:
-        orgName, taxId, taxoLight, description = parse(flatFile, DE)  # orgName, taxId, taxoLight, description
+        orgName, taxId, taxoLight, description = parse(input=flatFile, desc=desc)  # orgName, taxId, taxoLight, description
         flatFile = ''  # buffer free
         return orgName, taxId, taxoLight, description
     else:
         return '', '', '', ''
-
 
 # Builds query input string
 def buildQueryStr(txt_line, db, acc, l_cards, cnt_cards, l_lines):
@@ -248,10 +258,9 @@ def doGoldenMulti(allTaxo, l_cards, DE, allTaxId, osVSoc_bdb):
             flatFile = Golden.access_new(l_cards)
             idx_res += 1
         return allTaxo
-    except IOError, err:
-        print >>sys.stderr, err, l_cards
-        sys.exit()
-
+    except IOError as err:
+        print("%s %s" % (str(err), l_cards), file=sys.stderr)
+        sys.exit(1)
 
 # display results from allTaxo dictionnary.
 def printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile):
@@ -264,12 +273,13 @@ def printResults(l_lines, allTaxo, outfh, notaxfhout, splitFile):
                 taxonomy = allTaxo[li.acc]['taxoLight']
 
         if taxonomy:
-            print >>outfh, li.orig_line, "\t%s\t%s\t%s" % (allTaxo[li.acc]['orgName'], taxonomy, allTaxo[li.acc]['DE'])
+            print("%s\t%s\t%s\t%s" % (str(li.orig_line), str(allTaxo[li.acc]['orgName']), str(taxonomy),
+                                      str(allTaxo[li.acc]['DE'])), file=outfh)
         else:
             if notaxfhout:
-                print >>notaxfhout, li.orig_line
+                print("%s" % str(li.orig_line), file=notaxfhout)
             if not splitFile:
-                print >>outfh, li.orig_line
+                print("%s" % str(li.orig_line), file=outfh)
 
 ##############################################################################
 #
@@ -342,15 +352,16 @@ def column_analyser(fldcolumn, db):
     return acc, db
 
 
-def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=None, db=None, splitfile=False, description=False):
+def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards,
+              notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     allTaxId = {}
     try:
         line = tabfh.readline()
         lineNb = 1
-    except EOFError, err:
-        print >>sys.stderr, err
-        sys.exit()
+    except EOFError as err:
+        print("%s" % str(err), file=sys.stderr)
+        sys.exit(1)
     l_cards = ""
     cnt_cards = 0
     l_lines = []
@@ -361,25 +372,27 @@ def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=N
             continue
         try:
             fldcolumn = fld[column - 1].split(separator)
-        except:
-            print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
-            sys.exit()
+        except Exception as err:
+            print(TaxOptimizerError("[%s] Parsing: column error: couldn't parse line: \n%s ...\n --> %s" %
+                                    (str(err), line[0:50], str(lineNb))), file=sys.stderr)
+            sys.exit(1)
 
         acc, db = column_analyser(fldcolumn, db)
 
         if not acc or not db:
             if not splitfile:
-                print >>outfh, line[:-1]
+                print("%s" % str(line[:-1]), file=outfh)
             if notaxofh:
-                print >>notaxofh, line[:-1]
-                print >>sys.stderr, TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" % (fld[column - 1], separator, lineNb))
+                print("%s" % str(line[:-1]), file=notaxofh)
+            print(TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" %
+                                    (fld[column - 1], separator, str(lineNb))), file=sys.stderr)
             try:
                 line = tabfh.readline()
                 lineNb += 1
-            except EOFError, err:
-                print >>sys.stderr, err
-                print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
-                sys.exit()
+            except EOFError as err:
+                print("%s" % str(err), file=sys.stderr)
+                print(TaxOptimizerError("at line %s" % str(lineNb)), file=sys.stderr)
+                sys.exit(1)
             continue
         elif db not in ['silva', 'gg']:
             l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
@@ -393,11 +406,10 @@ def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=N
         try:
             line = tabfh.readline()
             lineNb += 1
-        except EOFError, err:
-            print >>sys.stderr, err
-            print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
-
-            sys.exit()
+        except EOFError as err:
+            print("%s" % str(err), file=sys.stderr)
+            print(TaxOptimizerError("at line %s" % str(lineNb)), file=sys.stderr)
+            sys.exit(1)
         lineNb += 1
 
     if cnt_cards != 0:
@@ -405,14 +417,15 @@ def main_ncbi(tabfh, outfh, osVSoc_bdb, column, separator, max_cards, notaxofh=N
         printResults(l_lines, allTaxo, outfh, notaxofh, splitfile)
 
 
-def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, db=None, splitfile=False, description=False):
+def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator,
+                  notaxofh=None, db=None, splitfile=False, description=False):
     allTaxo = {}
     try:
         line = tabfh.readline()
         lineNb = 1
-    except EOFError, err:
-        print >>sys.stderr, err
-        sys.exit()
+    except EOFError as err:
+        print("%s" % str(err), file=sys.stderr)
+        sys.exit(1)
     DE = ''
     while line:
         fld = line.split()
@@ -421,25 +434,25 @@ def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, d
             continue
         try:
             fldcolumn = fld[column - 1].split(separator)
-        except:
-            print >>sys.stderr, TaxOptimizerError("Parsing: column error: couldn't parse line: \n%s ...\n --> %s" % (line[0:50], lineNb))
-            sys.exit()
+        except Exception as err:
+            print(TaxOptimizerError("[%s] Parsing: column error: couldn't parse line: \n%s ...\n --> %s" %
+                                    (str(err), line[0:50], str(lineNb))), file=sys.stderr)
+            sys.exit(1)
 
         acc, db = column_analyser(fldcolumn, db)
         if not acc or not db:
             if not splitfile:
-                print >>outfh, line[:-1]
+                print("%s" % str(line[:-1]), file=outfh)
             if notaxofh:
-                print >>notaxofh, line[:-1]
-            print >>sys.stderr, TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" % (fld[column - 1], separator, lineNb))
-
+                print("%s" % str(line[:-1]), file=notaxofh)
+            print(TaxOptimizerError("Parsing: no acc and db in %s with separator=%s (line %s)" %
+                                    (fld[column - 1], separator, str(lineNb))), file=sys.stderr)
             try:
                 line = tabfh.readline()
                 lineNb += 1
-            except EOFError, err:
-                # print >>sys.stderr, err
-                print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
-                sys.exit()
+            except EOFError as err:
+                print(TaxOptimizerError("at line %s" % (lineNb)), file=sys.stderr)
+                sys.exit(1)
             continue
         else:
             taxonomy = ''
@@ -456,21 +469,20 @@ def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator, notaxofh=None, d
                 taxonomy, allTaxo = extractTaxoFrom_accVSos_ocBDB(acc, allTaxo, accVosocBDB)
 
             if taxonomy:
-                print >>outfh, line[:-1], "\t%s\t%s\t%s" % (allTaxo[acc]['orgName'], taxonomy, DE)
+                print("%s\t%s\t%s\t%s" % (line[:-1], allTaxo[acc]['orgName'], taxonomy, DE), file=outfh)
             else:
                 if notaxofh:
-                    print >>notaxofh, line[:-1]
+                    print("%s", str(line[:-1]), file=notaxofh)
                 if not splitfile:
-                    print >>outfh, line[:-1]
+                    print("%s" % str(line[:-1]), file=outfh)
 
         try:
             line = tabfh.readline()
             lineNb += 1
-        except EOFError, err:
-            print >>sys.stderr, err
-            print >>sys.stderr, TaxOptimizerError("in line %s" % (lineNb))
-
-            sys.exit()
+        except EOFError as err:
+            print("%s" % str(err), file=sys.stderr)
+            print(TaxOptimizerError("at line %s" % str(lineNb)), file=sys.stderr)
+            sys.exit(1)
         lineNb += 1
 
 
@@ -559,17 +571,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # ===== Tabulated file parsing
-    NCBITAXODB_BDB = 'taxodb.bdb'
-    GGTAXODB_BDB = 'gg_accVosoc.bdb'
-    SILVATAXODB_BDB = 'silva_accVosoc.bdb'
-
     if args.bdbtype == 'ncbi':
         osVSoc_bdb = bdb.DB()
         try:
             osVSoc_bdb.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-        except StandardError, err:
-            print >>sys.stderr, TaxOptimizerError("NCBI TaxoDB database open error, %s" % err)
-            sys.exit()
+        except StandardError as err:
+            print(TaxOptimizerError("NCBI TaxoDB database open error, %s" % str(err)), file=sys.stderr)
+            sys.exit(1)
 
         main_ncbi(args.tabfh, args.outfh, osVSoc_bdb, args.column, args.separator, args.max_cards, args.notaxofh, args.database, args.splitfile, args.description)
         osVSoc_bdb.close()
@@ -577,7 +585,8 @@ if __name__ == '__main__':
         accVosocBDB = bdb.DB()
         try:
             accVosocBDB.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-        except StandardError, err:
-            print >>sys.stderr, TaxOptimizerError("Taxonomy Berkeley database open error, %s" % err)
-            sys.exit()
+        except StandardError as err:
+            print(TaxOptimizerError("Taxonomy Berkeley database open error, %s" % str(err)), file=sys.stderr)
+            sys.exit(1)
         main_gg_silva(args.tabfh, args.outfh, accVosocBDB, args.column, args.separator, args.notaxofh, args.database, args.splitfile, args.description)
+    sys.exit(0)
