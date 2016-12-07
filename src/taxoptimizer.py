@@ -180,7 +180,7 @@ def buildQueryStr(db=None, acc=None):
 #  l_input : Depending on input_flag, a list of bank:AC bank:locus separated by '\n'
 #  so, bank:AC\nbank:locus...
 ##############################################################################
-def doGoldenMulti(taxonomy=None, ids=[], desc=None, taxid=None, bdb=None):
+def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
     """
     Performs a golden search
 
@@ -201,8 +201,11 @@ def doGoldenMulti(taxonomy=None, ids=[], desc=None, taxid=None, bdb=None):
     if not len(ids):
         print(GoldenError("No ids to search"), file=sys.stderr)
         sys.exit(1)
+
+    if VERBOSE:
+        print("[GOLDEN_MULTI] List entry has %d entries" % len(lst_input))
     idx_res = 0
-    # lst_input = ids.split("\n")
+
     #
     # try:
     #     entry = Golden.access_new(ids)
@@ -228,16 +231,15 @@ def doGoldenMulti(taxonomy=None, ids=[], desc=None, taxid=None, bdb=None):
         for entry in ids:
             print("Searching entry %s ... " % str(entry))
             flat = Golden.access_new(entry)
-            if flat is not None:
-                print("\tFOUND!")
-                db, acc = entry.split(":")
-                if acc not in taxonomy:
-                    taxonomy[acc] = {'db': db}
-                    taxonomy[acc]['orgName'], \
-                    taxonomy[acc]['taxId'], \
-                    taxonomy[acc]['taxoLight'], \
-                    taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
-                    taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
+            print("\tFOUND!")
+            db, acc = entry.split(":")
+            if acc not in taxonomy:
+                taxonomy[acc] = {'db': db}
+                taxonomy[acc]['orgName'], \
+                taxonomy[acc]['taxId'], \
+                taxonomy[acc]['taxoLight'], \
+                taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
+                taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
             else:
                 print("\t** NOT FOUND %s **" % str(flat))
         return taxonomy
@@ -248,8 +250,12 @@ def doGoldenMulti(taxonomy=None, ids=[], desc=None, taxid=None, bdb=None):
 # display results from taxonomy dictionnary.
 # def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, splitfile=None):
 def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
+    if not outfh:
+        outfh = sys.stdout
+    else:
+        outfh = open(outfh, 'w')
     for li in l_lines:
-        print("[%s] ORIGLINE: %s" % (li.acc, str(li.orig_line)))
+        print("[%s] ORIGLINE: %s" % (li.acc, str(li.orig_line)), file=outfh)
         taxo = ''
         if not li.skip_db:
             if 'taxoFull' in taxonomy[li.acc]:
@@ -258,7 +264,7 @@ def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
                 taxo = taxonomy[li.acc]['taxoLight']
         else:
             if VERBOSE:
-                print("SKIP %s" % str(li.orig_line))
+                print("SKIP %s" % str(li.orig_line), file=outfh)
         if taxo:
             print("%s\t%s\t%s\t%s" % (str(li.orig_line), str(taxonomy[li.acc]['orgName']), str(taxo),
                                       str(taxonomy[li.acc]['DE'])), file=outfh)
@@ -447,9 +453,9 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         if VERBOSE:
             print("** => Golden search done\n%s\n******************" % pprint(str(taxonomy)))
             print("** => l_lines has %d entries" % len(l_lines))
-        if 'A6XA53' not in taxonomy:
-            print("A6XA53 is not in taxonomy. ABORTED!")
-            sys.exit(0)
+        #if 'A6XA53' not in taxonomy:
+        #    print("A6XA53 is not in taxonomy. ABORTED!")
+        #    sys.exit(0)
         # printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
         printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
 
@@ -546,9 +552,10 @@ if __name__ == '__main__':
                                  action='store',
                                  dest='outfh',
                                  metavar="File name",
-                                 type=file,
+                                 # type=str,
                                  # type=argparse.FileType('w'),
                                  # default=sys.stdout,
+                                 default=None,
                                  help='Output file, default prints to STDOUT',
                                  required=False)
     general_options.add_argument("-b", "--bdb",
