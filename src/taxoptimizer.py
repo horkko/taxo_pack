@@ -230,7 +230,8 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
     #     print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
     #     sys.exit(1)
     try:
-        print("[GOLDEN_MULTI] We have %d entries to search" % len(ids))
+        if VERBOSE:
+            print("[GOLDEN_MULTI] We have %d entries to search" % len(ids))
         for entry in ids:
             db, acc = entry.split(":")
             if entry == '' or acc in taxonomy:
@@ -239,7 +240,6 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
             flat = Golden.access(db, acc)
             #print("[GOLDEN_MULTI] Results for %s\n%s\n" % (str(entry), str(flat)))
             if flat is not None:
-                #print("\tFOUND")
                 if acc not in taxonomy:
                     taxonomy[acc] = {'db': db}
                     taxonomy[acc]['orgName'], \
@@ -247,9 +247,6 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
                     taxonomy[acc]['taxoLight'], \
                     taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
                     taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
-            else:
-                pass
-                #print("\t** NOT FOUND %s **" % str(flat))
         return taxonomy
     except IOError as err:
         print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
@@ -260,11 +257,9 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
 def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
     if not outfh:
         outfh = sys.stdout
-
     for li in l_lines:
-        print("[%s] ORIGLINE: %s" % (li.acc, str(li.orig_line)), file=outfh)
         taxo = ''
-        if not li.skip_db:
+        if not li.skip_db and li.acc in taxonomy:
             if 'taxoFull' in taxonomy[li.acc]:
                 taxo = taxonomy[li.acc]['taxoFull']
             else:
@@ -429,15 +424,13 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         else:
             # l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
             #entry = buildQueryStr(db=db, acc=acc)
-            skipdb=True
+            skip = True
             if db in DB_MAPPING:
                 entry = "%s:%s" % (DB_MAPPING[db], str(acc))
                 entries.append(entry)
                 cnt_cards += 1
-                skipdb=False
-                if acc == 'O89815':
-                    print("Adding %s" % entry)
-            l_lines.append(InputLine(line[:-1], acc, skipdb))
+                skip = False
+            l_lines.append(InputLine(line[:-1], acc, skip))
             if cnt_cards == max_cards:
                 # taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=l_cards, desc=description, taxid=taxids, bdb=bdb)
                 taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=entries, desc=description, taxid=taxids, bdb=bdb)
