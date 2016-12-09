@@ -202,10 +202,6 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
         print(GoldenError("No ids to search"), file=sys.stderr)
         sys.exit(1)
 
-    if VERBOSE:
-        print("[GOLDEN_MULTI] List entry has %d entries" % len(lst_input))
-    idx_res = 0
-
     #
     # try:
     #     entry = Golden.access_new(ids)
@@ -228,18 +224,24 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
     #     print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
     #     sys.exit(1)
     try:
+        print("[GOLDEN_MULTI] We have %d entries to search" % len(ids))
         for entry in ids:
             print("Searching entry %s ... " % str(entry))
-            flat = Golden.access_new(entry)
-            print("\tFOUND!")
+            if entry == '':
+                continue
             db, acc = entry.split(":")
-            if acc not in taxonomy:
-                taxonomy[acc] = {'db': db}
-                taxonomy[acc]['orgName'], \
-                taxonomy[acc]['taxId'], \
-                taxonomy[acc]['taxoLight'], \
-                taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
-                taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
+            flat = Golden.access_new(entry)
+            # flat = Golden.access(db, acc)
+            #print("[GOLDEN_MULTI] Results for %s\n%s\n" % (str(entry), str(flat)))
+            if flat is not None:
+                print("\tFOUND")
+                if acc not in taxonomy:
+                    taxonomy[acc] = {'db': db}
+                    taxonomy[acc]['orgName'], \
+                    taxonomy[acc]['taxId'], \
+                    taxonomy[acc]['taxoLight'], \
+                    taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
+                    taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
             else:
                 print("\t** NOT FOUND %s **" % str(flat))
         return taxonomy
