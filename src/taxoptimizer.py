@@ -258,12 +258,26 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=False, taxid=None, bdb=None):
         print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
         sys.exit(1)
 
-# display results from taxonomy dictionnary.
-# def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, splitfile=None):
-def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
-    if not outfh:
-        outfh = sys.stdout
-    for li in l_lines:
+def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, splitfile=False):
+    """
+    Print parsed results into output file(s) and display results from taxonomy dictionary
+
+    :param lines: InputLine objects to print
+    :type lines: list
+    :param taxonomy: Taxonomy dictionary
+    :type taxonomy: dict
+    :param outfile: Output file name to print results
+    :type outfile: str
+    :param notaxofile: Output file where to print lines without taxonomy
+    :type notaxofile: filehandle
+    :param splitfile: Prints results with taxonomy
+    :type splitfile: bool
+    :return:
+    """
+
+    if not outfile:
+        outfile = sys.stdout
+    for li in lines:
         taxo = ''
         if not li.skip_db and li.acc in taxonomy:
             if 'taxoFull' in taxonomy[li.acc]:
@@ -272,15 +286,15 @@ def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
                 taxo = taxonomy[li.acc]['taxoLight']
         else:
             if VERBOSE:
-                print("SKIP %s" % str(li.orig_line), file=outfh)
+                print("SKIP %s" % str(li.orig_line), file=outfile)
         if taxo:
             print("%s\t%s\t%s\t%s" % (str(li.orig_line), str(taxonomy[li.acc]['orgName']), str(taxo),
-                                      str(taxonomy[li.acc]['DE'])), file=outfh)
+                                      str(taxonomy[li.acc]['DE'])), file=outfile)
         else:
-            if notaxfhout:
-                print("%s" % str(li.orig_line), file=notaxfhout)
-            if not splitFile:
-                print("%s" % str(li.orig_line), file=outfh)
+            if notaxofile:
+                print("%s" % str(li.orig_line), file=notaxofile)
+            if not splitfile:
+                print("%s" % str(li.orig_line), file=outfile)
 
 ##############################################################################
 #
@@ -462,8 +476,8 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
             if cnt_cards == max_cards:
                 # taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=l_cards, desc=description, taxid=taxids, bdb=bdb)
                 taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=entries, desc=description, taxid=taxids, bdb=bdb)
-                # printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, spltifile=splitfile)
-                printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
+                printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, spltifile=splitfile)
+                # printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
                 l_cards = ""
                 entries = []
                 l_lines = []
@@ -487,8 +501,8 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         if 'A6XA53' not in taxonomy:
             print("A6XA53 is not in taxonomy. ABORTED!")
             sys.exit(0)
-        # printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
-        printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
+        printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
+        # printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
     outfh.close()
     return True
 
