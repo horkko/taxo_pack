@@ -241,9 +241,11 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=False, taxid=None, bdb=None):
             db, acc = entry.split(":")
             if entry == '' or acc in taxonomy:
                 continue
-            # flat = Golden.access_new(entry)
-            flat = Golden.access(db, acc)
-            if flat is not None:
+            flat = Golden.access_new(entry)
+            # flat = Golden.access(db, acc)
+            if acc == 'O89815':
+                print("Flat is:\n==> %s\n%s<==" % (str(flat), str(flat[1])))
+            if flat is not None and flat[1] != ' Entry not found':
                 if acc not in taxonomy:
                     # taxonomy[acc] = {'db': db}
                     # taxonomy[acc]['orgName'], \
@@ -252,6 +254,7 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=False, taxid=None, bdb=None):
                     # taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
                     taxonomy[acc] = parse(input=flat, desc=desc)
                     taxonomy[acc].update({'db': db})
+                    print("taxonomy (%s)\n** %s" % (str(acc), str(taxonomy[acc])))
                     taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
         return taxonomy
     except IOError as err:
@@ -301,8 +304,6 @@ def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, split
 #            Taxonomy
 #
 ##############################################################################
-
-
 def extractTaxoFrom_osVSocBDB(acc, allTaxo, allTaxId, BDB):
     taxonomy = allTaxo[acc]['taxoLight']
     orgName = allTaxo[acc]['orgName']
@@ -376,8 +377,6 @@ def column_analyser(last_field, db):
             acc = last_field[1].split('.')[0]
     elif len(last_field) == 1 and db:
         acc = last_field[0]
-    # if VERBOSE:
-    #     print("[column_analyzer] acc=%s, db=%s" % (acc, db))
     return acc, db
 
 
@@ -498,9 +497,9 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         if VERBOSE:
             print("** => Golden search done\n%s\n******************" % pprint(str(taxonomy)))
             print("** => l_lines has %d entries" % len(l_lines))
-        if 'A6XA53' not in taxonomy:
-            print("A6XA53 is not in taxonomy. ABORTED!")
-            sys.exit(0)
+        # if 'A6XA53' not in taxonomy:
+        #     print("A6XA53 is not in taxonomy. ABORTED!")
+        #     sys.exit(0)
         printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
         # printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
     outfh.close()
