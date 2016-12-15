@@ -22,6 +22,11 @@ except ImportError as err:
     sys.exit(1)
 
 VERBOSE=False
+# What about ['pir', 'pdb', 'tpg', 'tpe', 'tpd', 'prf'] => None
+DB_MAPPING = {'sp': 'uniprot', 'sw': 'uniprot', 'tr': 'uniprot', 'trembl': 'uniprot', 'emb': 'embl', 'dbj': 'embl',
+              'gb': 'genbank', 'gp': 'genpept', 'ref': 'refseq', 'rdpii': 'rdpii', 'embl_wgs': 'embl_wgs',
+               'genbank_wgs': 'genbank_wgs'}
+
 
 
 class InputLine:
@@ -32,16 +37,16 @@ class InputLine:
         self.skip_db = skip_db
 
 
-def parseUniprot(input=None, desc=None):
+def parseUniprot(input=None, desc=False):
     """
     Parses a UniProt or EMBL like flat file
 
     :param input: UniProt/EMBL entry
     :type input: str
-    :param desc: Description tag value
-    type desc: str
-    :return: orgName, taxId, taxoLight, description
-    :rtype: str, str, str, str
+    :param desc: Add description to output
+    type desc: bool
+    :return: Dictionary with keys : orgName, taxId, taxoLight, description
+    :rtype: dict
     """
     if not input:
         print(ParserError("No UniProt/EMBL entry given"), file=sys.stderr)
@@ -72,20 +77,22 @@ def parseUniprot(input=None, desc=None):
         elif tag == 'OX':
             taxId += value
         elif tag in ['RN', 'DR', 'CC', 'FH', 'SQ']:
-            return orgName, taxId, taxoLight, description
-    return orgName, taxId, taxoLight, description
+            return {'orgName': orgName, 'taxId': taxId, 'taxoLight': taxoLight, 'DE': description}
+            # return orgName, taxId, taxoLight, description
+    return {'orgName': orgName, 'taxId': taxId, 'taxoLight': taxoLight, 'DE': description }
+    # return orgName, taxId, taxoLight, description
 
 
-def parseGenbank(input=None, desc=None):
+def parseGenbank(input=None, desc=False):
     """
     Parses GenBank like flat file
 
     :param input: GenBank entry
     :type input: str
-    :param desc: Description tag value
-    :type desc: str
-    :return: orgName, taxId, taxoLight, description
-    :rtype: str, str, str, str
+    :param desc: Add description to output
+    :type desc: bool
+    :return: Dictionary with keys : orgName, taxId, taxoLight, description
+    :rtype: dict
     """
     if not input:
         print(ParserError("No GenBank entry given"), file=sys.stderr)
@@ -112,22 +119,24 @@ def parseGenbank(input=None, desc=None):
         elif tag == 'TaxID':  # gi number
             taxId += value
         elif tag in ['REFERENCE', 'COMMENT', 'FEATURES', 'ORIGIN']:
-            return orgName, taxId, taxoLight, description
+            return {'orgName': orgName, 'taxId': taxId, 'taxoLight': taxoLight, 'DE': description }
+            # return orgName, taxId, taxoLight, description
         elif not tag:  # fin taxonomy
             taxoL = False
-    return orgName, taxId, taxoLight, description
+    return {'orgName': orgName, 'taxId': taxId, 'taxoLight': taxoLight, 'DE': description }
+    # return orgName, taxId, taxoLight, description
 
 
-def parse(input=None, desc=None):
+def parse(input=None, desc=False):
     """
     Parses db flat file (UniProt, EMBL, GenBank) into a DBRecord object
 
     :param input: Input entry
     :type input: str
-    :param desc: Description tag value
-    :type desc: str
-    :return: orgName, taxId, taxoLight, description
-    :rtype: str, str, str, str
+    :param desc: Add description to output
+    :type desc: bool
+    :return: Dictionary with keys : orgName, taxId, taxoLight, description
+    :rtype: dict
     """
     if not input:
         print(ParserError("No input entry given"))
@@ -136,7 +145,8 @@ def parse(input=None, desc=None):
         return parseUniprot(input=input, desc=desc)
     elif input[:5] == 'LOCUS':
         return parseGenbank(input=input, desc=desc)
-    return '', '', '', ''
+    # return '', '', '', ''
+    return {}
 
 # Builds query input string
 #def buildQueryStr(txt_line, db, acc, l_cards, cnt_cards, l_lines):
@@ -162,12 +172,13 @@ def buildQueryStr(db=None, acc=None):
         db = 'embl_wgs'
     elif db[0:8] == 'genbank_wgs':
         db = 'genbank_wgs'
-    elif db in ['pir', 'pdb', 'tpg', 'tpe', 'tpd', 'prf']:
-        # return '', '', '', ''
-        skip_db = True
+    # elif db in ['pir', 'pdb', 'tpg', 'tpe', 'tpd', 'prf']:
+    #     # return '', '', '', ''
+    #     skip_db = True
     else:
         skip_db = True
     if skip_db:
+        print("[BuildQuery] %s, %s not supported" % (str(acc), str(db)))
         return None
 
     return "%s:%s" % (str(db), str(acc))
@@ -180,7 +191,7 @@ def buildQueryStr(db=None, acc=None):
 #  l_input : Depending on input_flag, a list of bank:AC bank:locus separated by '\n'
 #  so, bank:AC\nbank:locus...
 ##############################################################################
-def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
+def doGoldenMulti(taxonomy=None, ids=None, desc=False, taxid=None, bdb=None):
     """
     Performs a golden search
 
@@ -188,8 +199,8 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
     :type taxonomy: dict
     :param ids: List of accession/ID to search in database
     :type ids: list
-    :param desc: Description type
-    :type desc: str
+    :param desc: Add description to output
+    :type desc: bool
     :param bdb:
     :return:
     """
@@ -224,65 +235,75 @@ def doGoldenMulti(taxonomy=None, ids=None, desc=None, taxid=None, bdb=None):
     #     print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
     #     sys.exit(1)
     try:
-        print("[GOLDEN_MULTI] We have %d entries to search" % len(ids))
+        if VERBOSE:
+            print("[GOLDEN_MULTI] We have %d entries to search" % len(ids))
         for entry in ids:
-            print("Searching entry %s ... " % str(entry))
-            if entry == '':
-                continue
             db, acc = entry.split(":")
+            if entry == '' or acc in taxonomy:
+                continue
             flat = Golden.access_new(entry)
             # flat = Golden.access(db, acc)
-            #print("[GOLDEN_MULTI] Results for %s\n%s\n" % (str(entry), str(flat)))
-            if flat is not None:
-                print("\tFOUND")
+            if acc == 'O89815':
+                print("Flat is:\n==> %s\n%s<==" % (str(flat), str(flat[1])))
+            if flat is not None and flat[1] != ' Entry not found':
                 if acc not in taxonomy:
-                    taxonomy[acc] = {'db': db}
-                    taxonomy[acc]['orgName'], \
-                    taxonomy[acc]['taxId'], \
-                    taxonomy[acc]['taxoLight'], \
-                    taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
+                    # taxonomy[acc] = {'db': db}
+                    # taxonomy[acc]['orgName'], \
+                    # taxonomy[acc]['taxId'], \
+                    # taxonomy[acc]['taxoLight'], \
+                    # taxonomy[acc]['DE'] = parse(input=flat, desc=desc)
+                    taxonomy[acc] = parse(input=flat, desc=desc)
+                    taxonomy[acc].update({'db': db})
+                    print("taxonomy (%s)\n** %s" % (str(acc), str(taxonomy[acc])))
                     taxonomy, taxid = extractTaxoFrom_osVSocBDB_multi(acc, taxonomy, taxid, bdb)
-            else:
-                print("\t** NOT FOUND %s **" % str(flat))
         return taxonomy
     except IOError as err:
         print(GoldenError("%s %s" % (str(err), ids)), file=sys.stderr)
         sys.exit(1)
 
-# display results from taxonomy dictionnary.
-# def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, splitfile=None):
-def printResults(l_lines, taxonomy, outfh, notaxfhout, splitFile):
-    if not outfh:
-        outfh = sys.stdout
-    else:
-        outfh = open(outfh, 'w')
-    for li in l_lines:
-        print("[%s] ORIGLINE: %s" % (li.acc, str(li.orig_line)), file=outfh)
+def printResults(lines=None, taxonomy=None, outfile=None, notaxofile=None, splitfile=False):
+    """
+    Print parsed results into output file(s) and display results from taxonomy dictionary
+
+    :param lines: InputLine objects to print
+    :type lines: list
+    :param taxonomy: Taxonomy dictionary
+    :type taxonomy: dict
+    :param outfile: Output file name to print results
+    :type outfile: str
+    :param notaxofile: Output file where to print lines without taxonomy
+    :type notaxofile: filehandle
+    :param splitfile: Prints results with taxonomy
+    :type splitfile: bool
+    :return:
+    """
+
+    if not outfile:
+        outfile = sys.stdout
+    for li in lines:
         taxo = ''
-        if not li.skip_db:
+        if not li.skip_db and li.acc in taxonomy:
             if 'taxoFull' in taxonomy[li.acc]:
                 taxo = taxonomy[li.acc]['taxoFull']
             else:
                 taxo = taxonomy[li.acc]['taxoLight']
         else:
             if VERBOSE:
-                print("SKIP %s" % str(li.orig_line), file=outfh)
+                print("SKIP %s" % str(li.orig_line), file=outfile)
         if taxo:
             print("%s\t%s\t%s\t%s" % (str(li.orig_line), str(taxonomy[li.acc]['orgName']), str(taxo),
-                                      str(taxonomy[li.acc]['DE'])), file=outfh)
+                                      str(taxonomy[li.acc]['DE'])), file=outfile)
         else:
-            if notaxfhout:
-                print("%s" % str(li.orig_line), file=notaxfhout)
-            if not splitFile:
-                print("%s" % str(li.orig_line), file=outfh)
+            if notaxofile:
+                print("%s" % str(li.orig_line), file=notaxofile)
+            if not splitfile:
+                print("%s" % str(li.orig_line), file=outfile)
 
 ##############################################################################
 #
 #            Taxonomy
 #
 ##############################################################################
-
-
 def extractTaxoFrom_osVSocBDB(acc, allTaxo, allTaxId, BDB):
     taxonomy = allTaxo[acc]['taxoLight']
     orgName = allTaxo[acc]['orgName']
@@ -356,22 +377,44 @@ def column_analyser(last_field, db):
             acc = last_field[1].split('.')[0]
     elif len(last_field) == 1 and db:
         acc = last_field[0]
-    if VERBOSE:
-        print("[column_analyzer] acc=%s, db=%s" % (acc, db))
     return acc, db
 
 
-# main_ncbi(tabfh=args.tabfh, outfh=args.outfh, bdb=osVSoc_bdb, column=args.column, sep=args.separator,
-#          max_cards=args.max_cards, notaxofh=args.notaxofh, db=args.database, splitfile=args.splitfile,
-#          description=args.description)
 def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max_cards=None,
               notaxofh=None, db=None, splitfile=False, description=False):
+    """
+    Parses output generated from search against a NCBI database
+
+    :param tabfh: Tabulated input file
+    :type tabfh: str
+    :param outfh: Output file, default STDOUT
+    :type outfh: str
+    :param bdb: Berkeley database to read taxonomy from
+    :type bdb: str
+    :param column: Column number to parse from input results file
+    :type column: int
+    :param separator: Separator used to split accession number and db name
+    :type separator: str
+    :param max_cards: Maximum number of entries to send to golden to retrieve information
+    :type max_cards: int
+    :param notaxofh: File name to store lines without taxonomy
+    :type notaxofh: str
+    :param db: Database name supposed all HSPs match against
+    :type db: str
+    :param splitfile: File name to store lines with taxonomy
+    :type splitfile: str
+    :param description: Add description into output result file
+    :type description: bool
+    :return: True
+    """
     if not bdb:
         Error.fatal("No bdb file given")
     if not tabfh:
         Error.fatal("No tabulated (input) file given")
     if not outfh:
         outfh = sys.stdout
+    else:
+        outfh = open(outfh, 'w')
 
     taxonomy = {}
     taxids = {}
@@ -398,6 +441,7 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         except Exception as err:
             print(TaxOptimizerError("[%s] Parsing: column error: couldn't parse line: \n%s ...\n --> %s" %
                                     (str(err), line[0:50], str(line_number))), file=sys.stderr)
+            outfh.close()
             sys.exit(1)
 
         acc, db = column_analyser(id_fields, db)
@@ -415,22 +459,24 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
             except EOFError as err:
                 print("%s" % str(err), file=sys.stderr)
                 print(TaxOptimizerError("at line %s" % str(line_number)), file=sys.stderr)
+                outfh.close()
                 sys.exit(1)
             continue
         else:
             # l_cards, cnt_cards, l_lines = buildQueryStr(line[:-1], db, acc, l_cards, cnt_cards, l_lines)
-            entry = buildQueryStr(db=db, acc=acc)
-            if entry:
+            #entry = buildQueryStr(db=db, acc=acc)
+            skip = True
+            if db in DB_MAPPING:
+                entry = "%s:%s" % (DB_MAPPING[db], str(acc))
                 entries.append(entry)
                 cnt_cards += 1
-            l_lines.append(InputLine(line[:-1], acc, False if entry else True))
+                skip = False
+            l_lines.append(InputLine(line[:-1], acc, skip))
             if cnt_cards == max_cards:
-                if VERBOSE:
-                    print("Starting Golden search (%d/%d)" % (cnt_cards, max_cards))
                 # taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=l_cards, desc=description, taxid=taxids, bdb=bdb)
                 taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=entries, desc=description, taxid=taxids, bdb=bdb)
-                # printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, spltifile=splitfile)
-                printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
+                printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, spltifile=splitfile)
+                # printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
                 l_cards = ""
                 entries = []
                 l_lines = []
@@ -442,25 +488,22 @@ def main_ncbi(tabfh=None, outfh=None, bdb=None, column=None, separator=None, max
         except EOFError as err:
             print("%s" % str(err), file=sys.stderr)
             print(TaxOptimizerError("at line %s" % str(line_number)), file=sys.stderr)
+            outfh.close()
             sys.exit(1)
         line_number += 1
 
     if cnt_cards != 0:
-        if VERBOSE:
-            print("** => Starting Golden search (%d/%d) <= **" % (cnt_cards, max_cards))
-        # print("Going to doGoldenMulti with ids as %s\nand taxonomy as %s\description %s"
-        #        % (str(entries), str(taxonomy),
-        #                                                                                     str(description)))
         taxonomy = doGoldenMulti(taxonomy=taxonomy, ids=entries, desc=description, taxid=taxids, bdb=bdb)
         if VERBOSE:
             print("** => Golden search done\n%s\n******************" % pprint(str(taxonomy)))
             print("** => l_lines has %d entries" % len(l_lines))
-        #if 'A6XA53' not in taxonomy:
-        #    print("A6XA53 is not in taxonomy. ABORTED!")
-        #    sys.exit(0)
-        # printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
-        printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
-
+        # if 'A6XA53' not in taxonomy:
+        #     print("A6XA53 is not in taxonomy. ABORTED!")
+        #     sys.exit(0)
+        printResults(lines=l_lines, taxonomy=taxonomy, outfile=outfh, notaxofile=notaxofh, splitfile=splitfile)
+        # printResults(l_lines, taxonomy, outfh, notaxofh, splitfile)
+    outfh.close()
+    return True
 
 def main_gg_silva(tabfh, outfh, accVosocBDB, column, separator,
                   notaxofh=None, db=None, splitfile=False, description=False):
@@ -551,8 +594,8 @@ if __name__ == '__main__':
                                  type=file,
                                  required=True)
     general_options.add_argument("-o", "--out",
-                                 action='store',
                                  dest='outfh',
+                                 type=str,
                                  metavar="File name",
                                  # type=str,
                                  # type=argparse.FileType('w'),
@@ -650,7 +693,7 @@ if __name__ == '__main__':
         accVosocBDB = bdb.DB()
         try:
             accVosocBDB.open(args.bdbfile, None, bdb.DB_HASH, bdb.DB_RDONLY)
-        except StandardError as err:
+        except Exception as err:
             print(TaxOptimizerError("Taxonomy Berkeley database open error, %s" % str(err)), file=sys.stderr)
             sys.exit(1)
         # main_gg_silva(args.tabfh, args.outfh, accVosocBDB, args.column, args.separator, args.notaxofh, args.database,
